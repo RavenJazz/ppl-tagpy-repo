@@ -1,5 +1,5 @@
 /* front.c - a lexical analyzer system for simple
- arithmetic expressions */
+ arithmetic and boolean expressions */
 #include <stdio.h>
 #include <ctype.h>
 /* Global declarations */
@@ -15,6 +15,7 @@ FILE *in_fp, *fopen(const char *filename, const char *mode);
 void addChar();
 void getChar();
 void getNonBlank();
+int peekChar();
 int lex();
 /* Character classes */
 #define LETTER 0
@@ -30,6 +31,17 @@ int lex();
 #define DIV_OP 24
 #define LEFT_PAREN 25
 #define RIGHT_PAREN 26
+/* New arithmetic operator tokens */
+#define EXP_OP 27       /* **  */
+#define MOD_OP 28       /* %   */
+#define FLOOR_DIV_OP 29 /* //  */
+/* New boolean operator tokens */
+#define EQ_OP 30  /* == */
+#define NEQ_OP 31 /* != */
+#define LT_OP 32  /* <  */
+#define GT_OP 33  /* >  */
+#define LE_OP 34  /* <= */
+#define GE_OP 35  /* >= */
 /******************************************************/
 /* main driver */
 int main()
@@ -45,6 +57,17 @@ int main()
             lex();
         } while (nextToken != EOF);
     }
+    return 0;
+}
+/*****************************************************/
+/* peekChar - look at the next character in the input
+ without consuming it (needed for two-character operators) */
+int peekChar()
+{
+    int c = getc(in_fp);
+    if (c != EOF)
+        ungetc(c, in_fp);
+    return c;
 }
 /*****************************************************/
 /* lookup - a function to lookup operators and parentheses
@@ -71,15 +94,73 @@ int lookup(char ch)
         break;
     case '*':
         addChar();
-        nextToken = MULT_OP;
+        if (peekChar() == '*') /* ** */
+        {
+            getChar();
+            addChar();
+            nextToken = EXP_OP;
+        }
+        else
+            nextToken = MULT_OP;
         break;
     case '/':
         addChar();
-        nextToken = DIV_OP;
+        if (peekChar() == '/') /* // */
+        {
+            getChar();
+            addChar();
+            nextToken = FLOOR_DIV_OP;
+        }
+        else
+            nextToken = DIV_OP;
+        break;
+    case '%':
+        addChar();
+        nextToken = MOD_OP;
         break;
     case '=':
         addChar();
-        nextToken = ASSIGN_OP;
+        if (peekChar() == '=') /* == */
+        {
+            getChar();
+            addChar();
+            nextToken = EQ_OP;
+        }
+        else
+            nextToken = ASSIGN_OP;
+        break;
+    case '!':
+        addChar();
+        if (peekChar() == '=') /* != */
+        {
+            getChar();
+            addChar();
+            nextToken = NEQ_OP;
+        }
+        else
+            nextToken = EOF; /* a lone '!' is not a valid token */
+        break;
+    case '<':
+        addChar();
+        if (peekChar() == '=') /* <= */
+        {
+            getChar();
+            addChar();
+            nextToken = LE_OP;
+        }
+        else
+            nextToken = LT_OP;
+        break;
+    case '>':
+        addChar();
+        if (peekChar() == '=') /* >= */
+        {
+            getChar();
+            addChar();
+            nextToken = GE_OP;
+        }
+        else
+            nextToken = GT_OP;
         break;
     default:
         addChar();
