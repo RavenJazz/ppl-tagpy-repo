@@ -2,6 +2,7 @@
  arithmetic and boolean expressions */
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 /* Global declarations */
 /* Variables */
 int charClass;
@@ -24,6 +25,7 @@ int lex();
 /* Token codes */
 #define INT_LIT 10
 #define IDENT 11
+#define NOISE_WORD 13
 #define ASSIGN_OP 20
 #define ADD_OP 21
 #define SUB_OP 22
@@ -72,6 +74,7 @@ int peekChar()
 /*****************************************************/
 /* lookup - a function to lookup operators and parentheses
  and return the token */
+ /*can be used for any symbol case or repeating symbol lexemes -> operators, etc.*/
 int lookup(char ch)
 {
     switch (ch)
@@ -200,11 +203,31 @@ void getChar()
 }
 /*****************************************************/
 /* getNonBlank - a function to call getChar until it
- returns a non-whitespace character */
-void getNonBlank()
-{
-    while (isspace(nextChar))
-        getChar();
+ returns a non-whitespace character
+
+ Used for returning strings as non-whitespace characters if inside a comment (# / ##)*/
+void getNonBlank() {
+    while (isspace(nextChar) || nextChar == '#'){
+        if (isspace(nextChar)){
+            getChar();
+        }else if (nextChar == '#'){
+            if (peekChar() == '#'){
+                getChar();
+                getChar();
+                while (nextChar != EOF){
+                    if (nextChar == '#' && peekChar() == '#'){
+                        getChar(); getChar();
+                        break;
+                    }
+                    getChar();
+                }
+            }else{
+                while (nextChar != EOF && nextChar != '\n'){
+                    getChar();
+                }
+            }
+        }
+    }
 }
 
 /*****************************************************/
@@ -216,16 +239,22 @@ int lex()
     getNonBlank();
     switch (charClass)
     {
-        /* Parse identifiers */
+        /* Parse identifiers  -> use this for keywords, noise words, etc.*/
     case LETTER:
         addChar();
         getChar();
-        while (charClass == LETTER || charClass == DIGIT)
+        while (charClass == LETTER || charClass == DIGIT || nextChar == '_')
         {
             addChar();
             getChar();
         }
+        //Noise words
+        if (strcmp(lexeme, "ay") == 0 || strcmp(lexeme, "ang") == 0){
+            nextToken = NOISE_WORD;
+        }else{
+        //identifiers are the last option if something is not a valid token
         nextToken = IDENT;
+        }
         break;
         /* Parse integer literals */
     case DIGIT:
