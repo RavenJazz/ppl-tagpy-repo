@@ -2,7 +2,6 @@
  arithmetic and boolean expressions */
 #include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 /* Global declarations */
 /* Variables */
 int charClass;
@@ -18,6 +17,7 @@ void getChar();
 void getNonBlank();
 int peekChar();
 int lex();
+int keyword_lookup();
 /* Character classes */
 #define LETTER 0
 #define DIGIT 1
@@ -241,20 +241,7 @@ int lex()
     {
         /* Parse identifiers  -> use this for keywords, noise words, etc.*/
     case LETTER:
-        addChar();
-        getChar();
-        while (charClass == LETTER || charClass == DIGIT || nextChar == '_')
-        {
-            addChar();
-            getChar();
-        }
-        //Noise words
-        if (strcmp(lexeme, "ay") == 0 || strcmp(lexeme, "ang") == 0){
-            nextToken = NOISE_WORD;
-        }else{
-        //identifiers are the last option if something is not a valid token
-        nextToken = IDENT;
-        }
+        nextToken = keyword_lookup();
         break;
         /* Parse integer literals */
     case DIGIT:
@@ -285,3 +272,54 @@ int lex()
            nextToken, lexeme);
     return nextToken;
 } /* End of function lex */
+
+/* keyword_lookup - a function to lookup keywords,
+ noise words, and identifiers using a DFA state machine */
+int keyword_lookup()
+{
+    int state = 0; /* State 0: Start state*/
+    
+    addChar();
+
+    switch (nextChar) {
+        case 'a': 
+            state = 1; 
+            break;
+        default:  
+            state = 99; //sink state for identifiers
+            break;
+    }
+    
+    getChar();
+    
+    /* Consume characters and transition states */
+    while (charClass == LETTER || charClass == DIGIT || nextChar == '_'){
+        addChar();
+        
+        switch (state){
+            case 1:
+                if (nextChar == 'y') state = 2; //'ay'
+                else if (nextChar == 'n') state = 3; // 'an'
+                else state = 99;
+                break;
+            
+            case 3: // 'an'
+                if (nextChar == 'g') state = 4; //'ang'
+                else state = 99;
+                break;
+            
+            default: //sink state
+                state = 99; 
+                break;
+        }
+        
+        getChar();
+    }
+    
+    /* Return the correct token based on the final state reached */
+    if (state == 2 || state == 4) {
+        return NOISE_WORD;
+    } else {
+        return IDENT;
+    }
+}
