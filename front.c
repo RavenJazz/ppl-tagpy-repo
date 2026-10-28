@@ -1,14 +1,24 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+
 /* Global declarations */
 /* Variables */
 int charClass;
-char lexeme[100];
+char lexeme[1024];
 char nextChar;
 int lexLen;
 int token;
 int nextToken;
 FILE *in_fp, *fopen(const char *filename, const char *mode);
+int indent_stack[100] = {0};
+int indent_top = 0;
+int pending_dedents = 0;
+int is_at_line_start = 1;
+int line_has_token = 0;
+int tokenLine = 1;
+int tokenColumn = 1;
+const char *tokenFieldName = NULL;
 /* Function declarations */
 void addChar();
 void getChar();
@@ -74,6 +84,57 @@ int keyword_lookup();
 /* [STMT] Delimiters used by statements */
 #define COLON 59 /* : */
 #define COMMA 60 /* , */
+#define TOKEN_NEWLINE 61
+#define TOKEN_INDENT 62
+#define TOKEN_DEDENT 63
+#define TOKEN_ERROR 64
+#define MAX_INDENT_DEPTH 100
+#define FIXED_FIELD_LABEL 65
+#define FIXED_FIELD_CONTINUATION 66
+#define FIXED_FIELD_STATEMENT 67
+#define FIXED_FIELD_SEQUENCE 68
+#define MAX_FIXED_FIELDS 16
+#define MAX_FIXED_COLUMNS 256
+#define MAX_FIXED_TOKENS 256
+#define MAX_FIXED_LINE_LENGTH 4096
+
+typedef struct
+{
+    const char *name;
+    int startColumn;
+    int endColumn;
+    int tokenCode;
+} FixedFieldSpec;
+
+/* Default FORTRAN-style layout; edit these 1-based inclusive columns for your format. */
+FixedFieldSpec fixedFieldLayout[] = {
+    {"label", 1, 5, FIXED_FIELD_LABEL},
+    {"continuation", 6, 6, FIXED_FIELD_CONTINUATION},
+    {"statement", 7, 72, FIXED_FIELD_STATEMENT},
+    {"sequence", 73, 80, FIXED_FIELD_SEQUENCE}};
+int fixedFieldCount = sizeof fixedFieldLayout / sizeof fixedFieldLayout[0];
+
+/* Set to 1 to use column-based fields; 0 preserves the original Tagpy lexer. */
+int fixed_field_mode = 0;
+
+typedef struct
+{
+    int tokenCode;
+    int line;
+    int column;
+    const char *fieldName;
+    char value[MAX_FIXED_COLUMNS + 1];
+} FixedFieldToken;
+
+static FixedFieldToken fixedTokens[MAX_FIXED_TOKENS];
+static int fixedTokenCount = 0;
+static int fixedTokenIndex = 0;
+static int fixedStatementToken = -1;
+static int fixedLineNumber = 0;
+static int fixedInputEnded = 0;
+static int fixedLookaheadValid = 0;
+static char fixedLookahead[MAX_FIXED_LINE_LENGTH];
+static int fixedLookaheadLine = 0;
 /******************************************************/
 /* main driver */
 int main()
@@ -83,7 +144,8 @@ int main()
         printf("ERROR - cannot open front.in \n");
     else
     {
-        getChar();
+        if (!fixed_field_mode)
+            getChar();
         do
         {
             lex();
@@ -296,10 +358,490 @@ void getNonBlank() {
 /*****************************************************/
 /* lex - a simple lexical analyzer for arithmetic
  expressions */
+static int fixed_layout_validated = 0;
+static int fixed_layout_invalid = 0;
+static int fixedStatementFieldIndex = -1;
+static int fixedContinuationFieldIndex = -1;
+
+static int validate_fixed_layout(void)
+{
+    int i, j;
+
+    if (fixedFieldCount < 1 || fixedFieldCount > MAX_FIXED_FIELDS)
+        return 0;
+
+    for (i = 0; i < fixedFieldCount; i++)
+    {
+        if (fixedFieldLayout[i].name == NULL ||
+            fixedFieldLayout[i].startColumn < 1 ||
+            fixedFieldLayout[i].endColumn < fixedFieldLayout[i].startColumn ||
+            fixedFieldLayout[i].endColumn > MAX_FIXED_COLUMNS)
+            return 0;
+
+        for (j = 0; j < i; j++)
+        {
+            if (fixedFieldLayout[i].startColumn <= fixedFieldLayout[j].endColumn &&
+                fixedFieldLayout[j].startColumn <= fixedFieldLayout[i].endColumn)
+                return 0;
+        }
+    }
+    return 1;
+}
+
+static int fixed_error(const char *message, int line, int column)
+{
+    nextToken = TOKEN_ERROR;
+    tokenLine = line;
+    tokenColumn = column;
+    tokenFieldName = "error";
+    snprintf(lexeme, sizeof lexeme, "%s", message);
+    printf("Error at line %d, column %d: %s\n", line, column, message);
+    return nextToken;
+}
+
+static int read_fixed_line(char *line, size_t capacity, int *lineNumber)
+{
+    char raw[MAX_FIXED_LINE_LENGTH];
+    size_t i, expandedLength = 0;
+    int c;
+
+    if (fixedLookaheadValid)
+    {
+        snprintf(line, capacity, "%s", fixedLookahead);
+        *lineNumber = fixedLookaheadLine;
+        fixedLookaheadValid = 0;
+        return 1;
+    }
+
+    if (fixedInputEnded || fgets(raw, sizeof raw, in_fp) == NULL)
+    {
+        fixedInputEnded = 1;
+        return 0;
+    }
+
+    fixedLineNumber++;
+    *lineNumber = fixedLineNumber;
+    i = strlen(raw);
+    if (i > 0 && raw[i - 1] == '\n')
+        raw[--i] = '\0';
+    if (i > 0 && raw[i - 1] == '\r')
+        raw[--i] = '\0';
+
+    if (i == sizeof raw - 1 && !feof(in_fp) && raw[i - 1] != '\n')
+    {
+        c = getc(in_fp);
+        if (c != EOF && c != '\n')
+        {
+            while ((c = getc(in_fp)) != EOF && c != '\n')
+                ;
+            return -1;
+        }
+    }
+
+    for (i = 0; raw[i] != '\0'; i++)
+    {
+        if (raw[i] == '\t')
+        {
+            size_t spaces = 8 - (expandedLength % 8);
+            while (spaces-- > 0 && expandedLength + 1 < capacity)
+                line[expandedLength++] = ' ';
+        }
+        else if (expandedLength + 1 < capacity)
+            line[expandedLength++] = raw[i];
+    }
+    line[expandedLength] = '\0';
+    return 1;
+}
+
+static void extract_fixed_field(const char *line, const FixedFieldSpec *field,
+                                char *value, size_t capacity)
+{
+    size_t start = (size_t)field->startColumn - 1;
+    size_t end = (size_t)field->endColumn;
+    size_t lineLength = strlen(line);
+    size_t valueLength, first = 0, last;
+
+    if (start >= lineLength)
+    {
+        value[0] = '\0';
+        return;
+    }
+    if (end > lineLength)
+        end = lineLength;
+    valueLength = end - start;
+    if (valueLength >= capacity)
+        valueLength = capacity - 1;
+    memcpy(value, line + start, valueLength);
+    value[valueLength] = '\0';
+
+    last = valueLength;
+    while (first < last && isspace((unsigned char)value[first]))
+        first++;
+    while (last > first && isspace((unsigned char)value[last - 1]))
+        last--;
+    if (first > 0)
+        memmove(value, value + first, last - first);
+    value[last - first] = '\0';
+}
+
+static int enqueue_fixed_field(int fieldIndex, const char *value, int line)
+{
+    FixedFieldToken *item;
+
+    if (fixedTokenCount >= MAX_FIXED_TOKENS)
+        return 0;
+
+    item = &fixedTokens[fixedTokenCount];
+    item->tokenCode = fixedFieldLayout[fieldIndex].tokenCode;
+    item->line = line;
+    item->column = fixedFieldLayout[fieldIndex].startColumn;
+    item->fieldName = fixedFieldLayout[fieldIndex].name;
+    snprintf(item->value, sizeof item->value, "%s", value);
+    if (strcmp(item->fieldName, "statement") == 0)
+        fixedStatementToken = fixedTokenCount;
+    fixedTokenCount++;
+    return 1;
+}
+
+static int return_fixed_token(void)
+{
+    FixedFieldToken *item = &fixedTokens[fixedTokenIndex++];
+
+    nextToken = item->tokenCode;
+    tokenLine = item->line;
+    tokenColumn = item->column;
+    tokenFieldName = item->fieldName;
+    snprintf(lexeme, sizeof lexeme, "%s", item->value);
+    printf("Next token is: %d, field %s at line %d, column %d: %s\n",
+           nextToken, tokenFieldName, tokenLine, tokenColumn, lexeme);
+
+    if (fixedTokenIndex == fixedTokenCount)
+    {
+        fixedTokenIndex = 0;
+        fixedTokenCount = 0;
+        fixedStatementToken = -1;
+    }
+    return nextToken;
+}
+
+static int lex_fixed_field(void)
+{
+    char line[MAX_FIXED_LINE_LENGTH];
+    char values[MAX_FIXED_FIELDS][MAX_FIXED_COLUMNS + 1];
+    int lineNumber, readStatus, i;
+
+    if (!fixed_layout_validated)
+    {
+        fixed_layout_validated = 1;
+        if (!validate_fixed_layout())
+        {
+            fixed_layout_invalid = 1;
+            return fixed_error("invalid fixed-field layout", 1, 1);
+        }
+        for (i = 0; i < fixedFieldCount; i++)
+        {
+            if (strcmp(fixedFieldLayout[i].name, "statement") == 0)
+                fixedStatementFieldIndex = i;
+            if (strcmp(fixedFieldLayout[i].name, "continuation") == 0)
+                fixedContinuationFieldIndex = i;
+        }
+    }
+    else if (fixed_layout_invalid)
+    {
+        nextToken = EOF;
+        tokenLine = 1;
+        tokenColumn = 1;
+        tokenFieldName = NULL;
+        strcpy(lexeme, "EOF");
+        return nextToken;
+    }
+
+    for (;;)
+    {
+        int length, isBlank = 1, isComment, isContinuation;
+
+        readStatus = read_fixed_line(line, sizeof line, &lineNumber);
+        if (readStatus < 0)
+        {
+            fixedTokenCount = fixedTokenIndex = 0;
+            fixedStatementToken = -1;
+            return fixed_error("physical line exceeds the input buffer", lineNumber, MAX_FIXED_LINE_LENGTH);
+        }
+        if (readStatus == 0)
+        {
+            if (fixedTokenCount > 0)
+                return return_fixed_token();
+            nextToken = EOF;
+            tokenLine = fixedLineNumber + 1;
+            tokenColumn = 1;
+            tokenFieldName = NULL;
+            strcpy(lexeme, "EOF");
+            printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+            return nextToken;
+        }
+
+        length = (int)strlen(line);
+        for (i = 0; i < length; i++)
+        {
+            if (!isspace((unsigned char)line[i]))
+            {
+                isBlank = 0;
+                break;
+            }
+        }
+        if (isBlank)
+            continue;
+
+        isComment = line[0] == 'C' || line[0] == 'c' || line[0] == '*' ||
+                    line[0] == '!' || line[0] == '#';
+        if (isComment)
+            continue;
+
+        for (i = 0; i < fixedFieldCount; i++)
+            extract_fixed_field(line, &fixedFieldLayout[i], values[i], sizeof values[i]);
+
+        isContinuation = fixedContinuationFieldIndex >= 0 &&
+                         values[fixedContinuationFieldIndex][0] != '\0' &&
+                         values[fixedContinuationFieldIndex][0] != '0';
+        if (isContinuation)
+        {
+            size_t currentLength, appendLength;
+            FixedFieldToken *statement;
+
+            if (fixedStatementToken < 0 || fixedStatementFieldIndex < 0)
+            {
+                fixedTokenCount = fixedTokenIndex = 0;
+                fixedStatementToken = -1;
+                return fixed_error("continuation line has no preceding statement",
+                                   lineNumber, fixedFieldLayout[fixedContinuationFieldIndex].startColumn);
+            }
+
+            statement = &fixedTokens[fixedStatementToken];
+            currentLength = strlen(statement->value);
+            appendLength = strlen(values[fixedStatementFieldIndex]);
+            if (currentLength + appendLength >= sizeof statement->value)
+            {
+                fixedTokenCount = fixedTokenIndex = 0;
+                fixedStatementToken = -1;
+                return fixed_error("continued statement exceeds the field buffer",
+                                   lineNumber, fixedFieldLayout[fixedStatementFieldIndex].startColumn);
+            }
+            memcpy(statement->value + currentLength, values[fixedStatementFieldIndex], appendLength + 1);
+
+            for (i = 0; i < fixedFieldCount; i++)
+            {
+                if (i != fixedStatementFieldIndex && !enqueue_fixed_field(i, values[i], lineNumber))
+                {
+                    fixedTokenCount = fixedTokenIndex = 0;
+                    fixedStatementToken = -1;
+                    return fixed_error("too many fields in a continued statement",
+                                       lineNumber, fixedFieldLayout[i].startColumn);
+                }
+            }
+            continue;
+        }
+
+        if (fixedTokenCount > 0)
+        {
+            snprintf(fixedLookahead, sizeof fixedLookahead, "%s", line);
+            fixedLookaheadLine = lineNumber;
+            fixedLookaheadValid = 1;
+            return return_fixed_token();
+        }
+
+        fixedStatementToken = -1;
+        for (i = 0; i < fixedFieldCount; i++)
+        {
+            if (!enqueue_fixed_field(i, values[i], lineNumber))
+            {
+                fixedTokenCount = fixedTokenIndex = 0;
+                fixedStatementToken = -1;
+                return fixed_error("too many fields in a record",
+                                   lineNumber, fixedFieldLayout[i].startColumn);
+            }
+        }
+    }
+}
+
 int lex()
 {
+    if (fixed_field_mode)
+        return lex_fixed_field();
+
     lexLen = 0;
-    getNonBlank();
+    lexeme[0] = '\0';
+
+    if (pending_dedents > 0)
+    {
+        pending_dedents--;
+        nextToken = TOKEN_DEDENT;
+        snprintf(lexeme, sizeof lexeme, "DEDENT");
+        printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+        return nextToken;
+    }
+
+    for (;;)
+    {
+        if (is_at_line_start)
+        {
+            int space_count = 0;
+
+            while (nextChar == ' ' || nextChar == '\t')
+            {
+                space_count += (nextChar == '\t') ? 4 : 1;
+                getChar();
+            }
+
+            /* Ignore blank lines and comment-only lines. */
+            if (nextChar == '\n' || (nextChar == '\r' && peekChar() == '\n'))
+            {
+                getChar();
+                if (nextChar == '\n')
+                    getChar();
+                continue;
+            }
+
+            if (nextChar == '#')
+            {
+                if (peekChar() == '#')
+                {
+                    getChar();
+                    getChar();
+                    while (charClass != EOF)
+                    {
+                        if (nextChar == '#' && peekChar() == '#')
+                        {
+                            getChar();
+                            getChar();
+                            break;
+                        }
+                        if (nextChar == '\n')
+                        {
+                            is_at_line_start = 1;
+                            line_has_token = 0;
+                        }
+                        getChar();
+                    }
+                    if (is_at_line_start)
+                        continue;
+                }
+                else
+                {
+                    while (charClass != EOF && nextChar != '\n')
+                        getChar();
+                    if (nextChar == '\n')
+                        getChar();
+                    continue;
+                }
+            }
+
+            if (charClass == EOF)
+            {
+                if (indent_top > 0)
+                {
+                    pending_dedents = indent_top - 1;
+                    indent_top = 0;
+                    nextToken = TOKEN_DEDENT;
+                    snprintf(lexeme, sizeof lexeme, "DEDENT");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                nextToken = EOF;
+                strcpy(lexeme, "EOF");
+                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                return nextToken;
+            }
+
+            is_at_line_start = 0;
+            if (space_count > indent_stack[indent_top])
+            {
+                if (indent_top >= MAX_INDENT_DEPTH - 1)
+                {
+                    printf("Error: Indentation too deep.\n");
+                    nextToken = TOKEN_ERROR;
+                    strcpy(lexeme, "ERROR");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                indent_stack[++indent_top] = space_count;
+                nextToken = TOKEN_INDENT;
+                strcpy(lexeme, "INDENT");
+                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                return nextToken;
+            }
+            if (space_count < indent_stack[indent_top])
+            {
+                while (indent_top > 0 && space_count < indent_stack[indent_top])
+                {
+                    indent_top--;
+                    pending_dedents++;
+                }
+                if (space_count != indent_stack[indent_top])
+                {
+                    printf("Error: Unindent does not match any outer indentation level.\n");
+                    nextToken = TOKEN_ERROR;
+                    strcpy(lexeme, "ERROR");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                pending_dedents--;
+                nextToken = TOKEN_DEDENT;
+                strcpy(lexeme, "DEDENT");
+                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                return nextToken;
+            }
+        }
+
+        if (nextChar == '#')
+        {
+            if (peekChar() == '#')
+            {
+                getChar();
+                getChar();
+                while (charClass != EOF)
+                {
+                    if (nextChar == '#' && peekChar() == '#')
+                    {
+                        getChar();
+                        getChar();
+                        break;
+                    }
+                    if (nextChar == '\n')
+                    {
+                        is_at_line_start = 1;
+                        line_has_token = 0;
+                    }
+                    getChar();
+                }
+                continue;
+            }
+            while (charClass != EOF && nextChar != '\n')
+                getChar();
+            continue;
+        }
+
+        if (isspace((unsigned char)nextChar))
+        {
+            if (nextChar == '\n')
+            {
+                getChar();
+                is_at_line_start = 1;
+                if (line_has_token)
+                {
+                    line_has_token = 0;
+                    nextToken = TOKEN_NEWLINE;
+                    strcpy(lexeme, "NEWLINE");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                continue;
+            }
+            getChar();
+            continue;
+        }
+        break;
+    }
+
     switch (charClass)
     {
         /* Parse identifiers  -> use this for keywords, noise words, etc.*/
@@ -336,13 +878,21 @@ int lex()
         break;
         /* EOF */
     case EOF:
+        if (indent_top > 0)
+        {
+            pending_dedents = indent_top - 1;
+            indent_top = 0;
+            nextToken = TOKEN_DEDENT;
+            strcpy(lexeme, "DEDENT");
+            printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+            return nextToken;
+        }
         nextToken = EOF;
-        lexeme[0] = 'E';
-        lexeme[1] = 'O';
-        lexeme[2] = 'F';
-        lexeme[3] = 0;
+        strcpy(lexeme, "EOF");
         break;
     } /* End of switch */
+    if (nextToken != EOF)
+        line_has_token = 1;
     printf("Next token is: %d, Next lexeme is %s\n",
            nextToken, lexeme);
     return nextToken;
