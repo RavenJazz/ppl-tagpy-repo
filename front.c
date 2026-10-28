@@ -26,6 +26,8 @@ int keyword_lookup();
 #define INT_LIT 10
 #define IDENT 11
 #define NOISE_WORD 13
+#define COMMENT 14
+#define BLK_COMMENT 15
 #define ASSIGN_OP 20
 #define ADD_OP 21
 #define SUB_OP 22
@@ -79,6 +81,32 @@ int lookup(char ch)
 {
     switch (ch)
     {
+    case '#':
+        addChar();
+        if (peekChar() == '#'){
+            getChar();
+            addChar();
+            getChar();
+            while (nextChar != EOF){
+                if (nextChar == '#' && peekChar() == '#'){
+                    addChar();
+                    getChar(); 
+                    addChar();
+                    nextToken = BLK_COMMENT;
+                    break;
+                }
+                addChar();
+                getChar();
+            }
+        }else{
+            getChar();
+            while (nextChar != EOF && nextChar != '\n'){
+                addChar();
+                getChar();
+            }
+            nextToken = COMMENT;
+        }
+        break;
     case '(':
         addChar();
         nextToken = LEFT_PAREN;
@@ -203,33 +231,12 @@ void getChar()
 }
 /*****************************************************/
 /* getNonBlank - a function to call getChar until it
- returns a non-whitespace character
+ returns a non-whitespace character*/
 
- Used for returning strings as non-whitespace characters if inside a comment (# / ##)*/
 void getNonBlank() {
-    while (isspace(nextChar) || nextChar == '#'){
-        if (isspace(nextChar)){
-            getChar();
-        }else if (nextChar == '#'){
-            if (peekChar() == '#'){
-                getChar();
-                getChar();
-                while (nextChar != EOF){
-                    if (nextChar == '#' && peekChar() == '#'){
-                        getChar(); getChar();
-                        break;
-                    }
-                    getChar();
-                }
-            }else{
-                while (nextChar != EOF && nextChar != '\n'){
-                    getChar();
-                }
-            }
-        }
-    }
+    while (isspace(nextChar))
+        getChar();
 }
-
 /*****************************************************/
 /* lex - a simple lexical analyzer for arithmetic
  expressions */
