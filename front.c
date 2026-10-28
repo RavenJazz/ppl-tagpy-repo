@@ -16,6 +16,15 @@ void getNonBlank();
 int peekChar();
 int lex();
 int keyword_lookup();
+void pushBracket(char open);
+void popBracket(char close);
+void checkUnclosed();
+/* Bracket matching and line tracking */
+#define MAX_BRACKET_DEPTH 100
+char bracketStack[MAX_BRACKET_DEPTH];
+int bracketLine[MAX_BRACKET_DEPTH];
+int bracketTop= 0;
+int lineNo = 1;
 /* Character classes */
 #define LETTER 0
 #define DIGIT 1
@@ -74,6 +83,9 @@ int keyword_lookup();
 /* [STMT] Delimiters used by statements */
 #define COLON 59 /* : */
 #define COMMA 60 /* , */
+/* [DELIM] Brace token for the mapped collection (dictionaries and sets) */
+#define LEFT_BRACE 61 /* { */
+#define RIGHT_BRACE 62 /* } */
 /******************************************************/
 /* main driver */
 int main()
@@ -88,6 +100,7 @@ int main()
         {
             lex();
         } while (nextToken != EOF);
+        checkUnclosed(); /* report any bracket that never closed */
     }
     return 0;
 }
@@ -111,10 +124,12 @@ int lookup(char ch)
     {
     case '(':
         addChar();
+        pushBracket('(');
         nextToken = LEFT_PAREN;
         break;
     case ')':
         addChar();
+        popBracket(')');
         nextToken = RIGHT_PAREN;
         break;
     case '+':
@@ -205,11 +220,23 @@ int lookup(char ch)
         break;
     case '[': /* [EXPR] */
         addChar();
+        pushBracket('[');
         nextToken = LEFT_BRACKET;
         break;
     case ']': /* [EXPR] */
         addChar();
+        popBracket(']');
         nextToken = RIGHT_BRACKET;
+        break;
+    case '{': /* [DELIM] */
+        addChar();
+        pushBracket ('{');
+        nextToken = LEFT_BRACE;
+        break;
+    case '}': /* [DELIM] */
+        addChar();
+        popBracket ('}');
+        nextToken = RIGHT_BRACE;
         break;
     case '"': 
     case '\'':
@@ -246,6 +273,54 @@ void addChar()
     }
     else
         printf("Error - lexeme is too long \n");
+}
+
+/*****************************************************/
+/* pushBracket - remember an opening bracket ( [ { on the stack,
+   along with where the line is found on */
+void pushBracket(char open) 
+{
+    if (bracketTop < MAX_BRACKET_DEPTH)
+    {
+        bracketStack[bracketTop] = open;
+        bracketLine[bracketTop] = lineNo;
+        bracketTop++;
+    }
+    else
+        printf("Error - brackets nested too deeply \n");
+}
+/*****************************************************/
+/* popBracket - check that a closing bracket ) ] } matches the 
+   most recent open bracket. And reports an error if there is 
+   none or if its the wrong kind */
+void popBracket(char close)
+{
+    char open;
+
+    if (bracketTop == 0)
+    {
+        printf("Error - '%c' on line %d has no matching opening bracket \n", 
+              close, lineNo);
+        return ;
+    }
+    bracketTop--;
+    open = bracketStack[bracketTop];
+    if((open == '(' && close != ')') ||
+       (open == '[' && close != ']') ||
+       (open == '{' && close != '}'))
+        printf("Error - '%c' on line %d does not match '%c' from line %d \n", 
+              close, lineNo, open, bracketLine[bracketTop]);
+}
+/*****************************************************/
+/* checkUnclosed - called at the end of input; any opening 
+   bracket still on the stack was never closed */
+void checkUnclosed()
+{
+    while (bracketTop > 0)
+    {
+        bracketTop--;
+        printf("Error - '%c' from line %d is never closed \n", bracketStack[bracketTop], bracketLine[bracketTop]);
+    }
 }
 /*****************************************************/
 /* getChar - a function to get the next character of
