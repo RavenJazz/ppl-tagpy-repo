@@ -1,0 +1,27 @@
+## Tagpy sample program
+   covering every token class ##
+# global state
+itukoy kwadrado(num x):
+    ibalik x ** 2
+
+num a = 10
+tul pangalan = "Ana"
+baka tama = totoo
+baka mali = palso
+kar letra = 'k'
+pisi presyo = 10.5
+lista nums = [1, 2, 3]
+{"a": 1}; a = a + 1 - 2 * 3 / 4 % 5 // 6 # trailing comment
+kung a >= 5 at hindi (a == 7):
+    sulatln("malaki ang numero")
+kundikung a != 3 o a < 2:
+    sulat(a // 2, a % 3)
+kundi:
+    sulatln(kwadrado(a))
+bawat n sa nums:
+    sulatln(n)
+suri a:
+    sakali 10:
+        sulatln(a <= 1 o a > 0)
+kunin(pangalan)
+ang numero ay _x

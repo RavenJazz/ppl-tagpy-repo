@@ -1,37 +1,62 @@
+/*
+ * Tagpy Lexical Analyzer  (COSC 303 - Principles of Programming Languages)
+ *
+ * Reads a Tagpy source file (extension .tagpy) and writes every token it
+ * recognizes to a text file named "Symbol Table.txt" using the format
+ *
+ *      TOKEN TYPE              LEXEME
+ *
+ * Keywords, reserved words, noise words and identifiers are recognized by a
+ * hand-built DFA (keyword_lookup) - no string comparison or word matching
+ * functions are used.  Operators and delimiters use one character of
+ * lookahead.  Anything that is not a valid token is reported and written to
+ * the table as INVALID; the analyzer keeps going.
+ *
+ * Build:  gcc front.c -o front
+ * Run:    ./front sample.tagpy      (or just ./front to use sample.tagpy)
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
 
 /* Safe wrapper: tolower on a possibly-high byte */
 #define LOWER(c) tolower((unsigned char)(c))
 
+#define DEFAULT_INPUT "sample.tagpy"
+#define SYMBOL_TABLE_FILE "Symbol Table.txt"
+#define SHOW_LAYOUT_IN_TABLE 1 /* 1 = also list NEWLINE / INDENT / DEDENT */
+#define LEXEME_MAX 4096
+#define TAB_WIDTH 4
+
 /* Global declarations */
 int charClass;
-char lexeme[1024];
+char lexeme[LEXEME_MAX];
 int nextChar; /* int so EOF and bytes >= 0x80 are handled safely */
 int lexLen;
-int token;
+int lexTruncated = 0;
 int nextToken;
+int tokLine = 1; /* line on which the current token starts */
+int errorCount = 0;
+int tokenCount = 0;
 FILE *in_fp;
+FILE *out_fp;
 int indent_stack[100] = {0};
 int indent_top = 0;
 int pending_dedents = 0;
 int is_at_line_start = 1;
 int line_has_token = 0;
-int skipAdvance = 0; /* set by lookup() when it must not consume the next char */
 
 /* Function declarations */
-void addChar();
-void getChar();
-void getNonBlank();
-int peekChar();
-int lex();
+void addChar(void);
+void getChar(void);
+int peekChar(void);
+int lex(void);
 int lookup(int ch);
 int keyword_lookup();
 void pushBracket(char open);
 void popBracket(char close);
-void checkUnclosed();
+void checkUnclosed(void);
+void reportError(int line, const char *msg, const char *text);
 
 /* Bracket matching and line tracking */
 #define MAX_BRACKET_DEPTH 100
@@ -67,63 +92,247 @@ int lineNo = 1;
 #define GT_OP 33  /* >  */
 #define LE_OP 34  /* <= */
 #define GE_OP 35  /* >= */
-/* [EXPR] Logical operator tokens */
+/* Logical operator tokens */
 #define AT_OP 36    /* at    */
 #define O_OP 37     /* o     */
 #define HINDI_OP 38 /* hindi */
-/* [EXPR] Literal tokens */
+/* Literal tokens */
 #define TRUE_LIT 39   /* totoo            */
 #define FALSE_LIT 40  /* palso            */
 #define FLOAT_LIT 41  /* 10.5             */
 #define STRING_LIT 42 /* "text" or 'text' */
-/* [EXPR] Index brackets */
+/* Index brackets */
 #define LEFT_BRACKET 43  /* [ */
 #define RIGHT_BRACKET 44 /* ] */
-/* [STMT] Statement keyword tokens */
+/* Statement keyword tokens */
 #define KW_KUNG 45      /* kung      */
 #define KW_KUNDIKUNG 46 /* kundikung */
 #define KW_KUNDI 47     /* kundi     */
 #define KW_BAWAT 48     /* bawat     */
 #define KW_SA 49        /* sa        */
-/* [STMT] Declaration keyword tokens */
+/* Declaration (data type) reserved word tokens */
 #define TYPE_NUM 50   /* num   */
 #define TYPE_TUL 51   /* tul   */
 #define TYPE_BAKA 52  /* baka  */
 #define TYPE_KAR 53   /* kar   */
 #define TYPE_PISI 54  /* pisi  */
 #define TYPE_LISTA 55 /* lista */
-/* [STMT] Input / output keyword tokens */
+/* Input / output reserved word tokens */
 #define IO_SULAT 56   /* sulat   */
 #define IO_SULATLN 57 /* sulatln */
 #define IO_KUNIN 58   /* kunin   */
-/* [STMT] Delimiters used by statements */
+/* Delimiters */
 #define COLON 59 /* : */
 #define COMMA 60 /* , */
-/* [LAYOUT] Blank space / off-side rule tokens */
+/* Blank space / off-side rule tokens */
 #define TOKEN_NEWLINE 61
 #define TOKEN_INDENT 62
 #define TOKEN_DEDENT 63
-#define TOKEN_ERROR 64
+#define TOKEN_ERROR 64 /* INVALID */
 #define MAX_INDENT_DEPTH 100
-/* [DELIM] Brace tokens for dictionaries and sets */
+/* Brace tokens for dictionaries and sets */
 #define LEFT_BRACE 65  /* { */
 #define RIGHT_BRACE 66 /* } */
-/* [KWD] Function / type keyword tokens */
+/* Function / type keyword tokens */
 #define KW_ITUKOY 67 /* itukoy */
 #define KW_IBALIK 68 /* ibalik */
 #define KW_SURI 69   /* suri   */
 #define KW_SAKALI 70 /* sakali */
+/* Added for the Symbol Table */
+#define SEMICOLON 71     /* ; */
+#define DOT 72           /* . */
+#define LINE_COMMENT 73  /* # ...        */
+#define BLOCK_COMMENT 74 /* ## ... ##    */
+
+/******************************************************/
+/* tokenName - the TOKEN TYPE column of the Symbol Table */
+const char *tokenName(int t)
+{
+    switch (t)
+    {
+    case IDENT:         return "IDENTIFIER";
+    case NOISE_WORD:    return "NOISE_WORD";
+    case INT_LIT:       return "INT_LITERAL";
+    case FLOAT_LIT:     return "FLOAT_LITERAL";
+    case STRING_LIT:    return "STRING_LITERAL";
+    case TRUE_LIT:      return "TRUE_LITERAL";
+    case FALSE_LIT:     return "FALSE_LITERAL";
+    /* arithmetic operators (7) */
+    case ADD_OP:        return "ADD";
+    case SUB_OP:        return "SUBTRACT";
+    case MULT_OP:       return "MULTIPLY";
+    case DIV_OP:        return "DIVIDE";
+    case EXP_OP:        return "EXPONENT";
+    case MOD_OP:        return "MODULO";
+    case FLOOR_DIV_OP:  return "FLOOR_DIVIDE";
+    case ASSIGN_OP:     return "ASSIGN";
+    /* boolean operators (9) */
+    case EQ_OP:         return "EQUAL";
+    case NEQ_OP:        return "NOT_EQUAL";
+    case LT_OP:         return "LESS_THAN";
+    case GT_OP:         return "GREATER_THAN";
+    case LE_OP:         return "LESS_EQUAL";
+    case GE_OP:         return "GREATER_EQUAL";
+    case AT_OP:         return "AND";
+    case O_OP:          return "OR";
+    case HINDI_OP:      return "NOT";
+    /* keywords */
+    case KW_KUNG:       return "KW_KUNG";
+    case KW_KUNDIKUNG:  return "KW_KUNDIKUNG";
+    case KW_KUNDI:      return "KW_KUNDI";
+    case KW_BAWAT:      return "KW_BAWAT";
+    case KW_SA:         return "KW_SA";
+    case KW_ITUKOY:     return "KW_ITUKOY";
+    case KW_IBALIK:     return "KW_IBALIK";
+    case KW_SURI:       return "KW_SURI";
+    case KW_SAKALI:     return "KW_SAKALI";
+    /* reserved words */
+    case TYPE_NUM:      return "RW_NUM";
+    case TYPE_TUL:      return "RW_TUL";
+    case TYPE_BAKA:     return "RW_BAKA";
+    case TYPE_KAR:      return "RW_KAR";
+    case TYPE_PISI:     return "RW_PISI";
+    case TYPE_LISTA:    return "RW_LISTA";
+    case IO_SULAT:      return "RW_SULAT";
+    case IO_SULATLN:    return "RW_SULATLN";
+    case IO_KUNIN:      return "RW_KUNIN";
+    /* delimiters and brackets */
+    case LEFT_PAREN:    return "LPAREN";
+    case RIGHT_PAREN:   return "RPAREN";
+    case LEFT_BRACKET:  return "LBRACKET";
+    case RIGHT_BRACKET: return "RBRACKET";
+    case LEFT_BRACE:    return "LBRACE";
+    case RIGHT_BRACE:   return "RBRACE";
+    case COLON:         return "COLON";
+    case COMMA:         return "COMMA";
+    case SEMICOLON:     return "SEMICOLON";
+    case DOT:           return "DOT";
+    /* comments */
+    case LINE_COMMENT:  return "LINE_COMMENT";
+    case BLOCK_COMMENT: return "BLOCK_COMMENT";
+    /* layout */
+    case TOKEN_NEWLINE: return "NEWLINE";
+    case TOKEN_INDENT:  return "INDENT";
+    case TOKEN_DEDENT:  return "DEDENT";
+    case TOKEN_ERROR:   return "INVALID";
+    }
+    return "UNKNOWN";
+}
+
+/******************************************************/
+/* hasTagpyExtension - the input file must end in .tagpy (checked one
+   character at a time, no string functions) */
+int hasTagpyExtension(const char *path)
+{
+    static const char ext[] = {'.', 't', 'a', 'g', 'p', 'y'};
+    int len = 0, i;
+
+    while (path[len])
+        len++;
+    if (len < 6)
+        return 0;
+    for (i = 0; i < 6; i++)
+        if (LOWER(path[len - 6 + i]) != ext[i])
+            return 0;
+    return 1;
+}
+
+/******************************************************/
+/* writeLexeme - print a lexeme on one table row (control chars escaped) */
+void writeLexeme(const char *s)
+{
+    for (; *s; s++)
+    {
+        if (*s == '\n')
+            fputs("\\n", out_fp);
+        else if (*s == '\r')
+            fputs("\\r", out_fp);
+        else if (*s == '\t')
+            fputs("\\t", out_fp);
+        else
+            fputc(*s, out_fp);
+    }
+}
+
+/******************************************************/
+/* finish - record the token that was just scanned and return its code */
+int finish(int tok)
+{
+    int isLayout = (tok == TOKEN_NEWLINE || tok == TOKEN_INDENT ||
+                    tok == TOKEN_DEDENT);
+    int isComment = (tok == LINE_COMMENT || tok == BLOCK_COMMENT);
+
+    nextToken = tok;
+
+    if (lexTruncated)
+    {
+        reportError(tokLine, "lexeme too long, truncated", lexeme);
+        lexTruncated = 0;
+    }
+
+    if (SHOW_LAYOUT_IN_TABLE || !isLayout)
+    {
+        fprintf(out_fp, "%-24s", tokenName(tok));
+        writeLexeme(lexeme);
+        fputc('\n', out_fp);
+        tokenCount++;
+    }
+
+    /* comments and layout tokens do not count as "something on this line" */
+    if (!isLayout && !isComment)
+        line_has_token = 1;
+    return tok;
+}
+
+/* finishText - finish a token whose lexeme is a fixed label */
+int finishText(int tok, const char *text)
+{
+    lexLen = 0;
+    lexeme[0] = '\0';
+    while (*text)
+    {
+        lexeme[lexLen++] = *text++;
+        lexeme[lexLen] = '\0';
+    }
+    return finish(tok);
+}
+
+/******************************************************/
+/* reportError - invalid / unrecognized input handling */
+void reportError(int line, const char *msg, const char *text)
+{
+    errorCount++;
+    if (text && text[0])
+        fprintf(stderr, "Lexical error (line %d): %s: %s\n", line, msg, text);
+    else
+        fprintf(stderr, "Lexical error (line %d): %s\n", line, msg);
+}
 
 /******************************************************/
 /* main driver */
-int main()
+int main(int argc, char *argv[])
 {
-    /* Open the input data file and process its contents */
-    if ((in_fp = fopen("front.in", "r")) == NULL)
+    const char *path = (argc > 1) ? argv[1] : DEFAULT_INPUT;
+
+    if (!hasTagpyExtension(path))
     {
-        printf("ERROR - cannot open front.in \n");
+        fprintf(stderr, "ERROR - input file '%s' must have the .tagpy extension\n", path);
         return 1;
     }
+    if ((in_fp = fopen(path, "r")) == NULL)
+    {
+        fprintf(stderr, "ERROR - cannot open %s\n", path);
+        return 1;
+    }
+    if ((out_fp = fopen(SYMBOL_TABLE_FILE, "w")) == NULL)
+    {
+        fprintf(stderr, "ERROR - cannot create %s\n", SYMBOL_TABLE_FILE);
+        fclose(in_fp);
+        return 1;
+    }
+
+    fprintf(out_fp, "%-24s%s\n", "TOKEN TYPE", "LEXEME");
+    fprintf(out_fp, "%-24s%s\n", "----------", "------");
 
     getChar();
     do
@@ -131,14 +340,18 @@ int main()
         lex();
     } while (nextToken != EOF);
     checkUnclosed(); /* report any bracket that never closed */
+
     fclose(in_fp);
+    fclose(out_fp);
+    printf("Scanned %s: %d tokens written to \"%s\", %d lexical error(s).\n",
+           path, tokenCount, SYMBOL_TABLE_FILE, errorCount);
     return 0;
 }
 
 /*****************************************************/
 /* peekChar - look at the next character without consuming it
    (needed for two-character operators) */
-int peekChar()
+int peekChar(void)
 {
     int c = getc(in_fp);
     if (c != EOF)
@@ -147,7 +360,8 @@ int peekChar()
 }
 
 /*****************************************************/
-/* lookup - operators, delimiters, strings */
+/* lookup - operators and delimiters.  Leaves nextChar on the LAST
+   character of the token; lex() advances past it. */
 int lookup(int ch)
 {
     switch (ch)
@@ -155,161 +369,121 @@ int lookup(int ch)
     case '(':
         addChar();
         pushBracket('(');
-        nextToken = LEFT_PAREN;
-        break;
+        return finish(LEFT_PAREN);
     case ')':
         addChar();
         popBracket(')');
-        nextToken = RIGHT_PAREN;
-        break;
+        return finish(RIGHT_PAREN);
     case '+':
         addChar();
-        nextToken = ADD_OP;
-        break;
+        return finish(ADD_OP);
     case '-':
         addChar();
-        nextToken = SUB_OP;
-        break;
+        return finish(SUB_OP);
     case '*':
         addChar();
         if (peekChar() == '*') /* ** */
         {
             getChar();
             addChar();
-            nextToken = EXP_OP;
+            return finish(EXP_OP);
         }
-        else
-            nextToken = MULT_OP;
-        break;
+        return finish(MULT_OP);
     case '/':
         addChar();
         if (peekChar() == '/') /* // */
         {
             getChar();
             addChar();
-            nextToken = FLOOR_DIV_OP;
+            return finish(FLOOR_DIV_OP);
         }
-        else
-            nextToken = DIV_OP;
-        break;
+        return finish(DIV_OP);
     case '%':
         addChar();
-        nextToken = MOD_OP;
-        break;
+        return finish(MOD_OP);
     case '=':
         addChar();
         if (peekChar() == '=') /* == */
         {
             getChar();
             addChar();
-            nextToken = EQ_OP;
+            return finish(EQ_OP);
         }
-        else
-            nextToken = ASSIGN_OP;
-        break;
+        return finish(ASSIGN_OP);
     case '!':
         addChar();
         if (peekChar() == '=') /* != */
         {
             getChar();
             addChar();
-            nextToken = NEQ_OP;
+            return finish(NEQ_OP);
         }
-        else
-        {
-            printf("Error - lone '!' on line %d \n", lineNo);
-            nextToken = TOKEN_ERROR; /* report and keep lexing */
-        }
-        break;
+        reportError(tokLine, "lone '!' (did you mean != or hindi?)", lexeme);
+        return finish(TOKEN_ERROR);
     case '<':
         addChar();
         if (peekChar() == '=') /* <= */
         {
             getChar();
             addChar();
-            nextToken = LE_OP;
+            return finish(LE_OP);
         }
-        else
-            nextToken = LT_OP;
-        break;
+        return finish(LT_OP);
     case '>':
         addChar();
         if (peekChar() == '=') /* >= */
         {
             getChar();
             addChar();
-            nextToken = GE_OP;
+            return finish(GE_OP);
         }
-        else
-            nextToken = GT_OP;
-        break;
+        return finish(GT_OP);
     case ':':
         addChar();
-        nextToken = COLON;
-        break;
+        return finish(COLON);
     case ',':
         addChar();
-        nextToken = COMMA;
-        break;
+        return finish(COMMA);
+    case ';':
+        addChar();
+        return finish(SEMICOLON);
+    case '.':
+        addChar();
+        return finish(DOT);
     case '[':
         addChar();
         pushBracket('[');
-        nextToken = LEFT_BRACKET;
-        break;
+        return finish(LEFT_BRACKET);
     case ']':
         addChar();
         popBracket(']');
-        nextToken = RIGHT_BRACKET;
-        break;
+        return finish(RIGHT_BRACKET);
     case '{':
         addChar();
         pushBracket('{');
-        nextToken = LEFT_BRACE;
-        break;
+        return finish(LEFT_BRACE);
     case '}':
         addChar();
         popBracket('}');
-        nextToken = RIGHT_BRACE;
-        break;
-    case '"':
-    case '\'':
-        lexeme[0] = 0;
-        lexLen = 0;
-        getChar();
-        while (charClass != EOF && nextChar != ch && nextChar != '\n')
-        {
-            addChar();
-            getChar();
-        }
-        if (nextChar == ch) /* closing quote found; lex() consumes it */
-            nextToken = STRING_LIT;
-        else
-        {
-            printf("Error - unterminated string on line %d \n", lineNo);
-            nextToken = TOKEN_ERROR;
-            skipAdvance = 1; /* don't swallow the newline / EOF */
-        }
-        break;
+        return finish(RIGHT_BRACE);
     default:
         addChar();
-        printf("Error - unknown character '%c' on line %d \n", ch, lineNo);
-        nextToken = TOKEN_ERROR; /* report and keep lexing */
-        break;
+        reportError(tokLine, "unknown character", lexeme);
+        return finish(TOKEN_ERROR);
     }
-    return nextToken;
 }
 
 /*****************************************************/
-/* addChar - add nextChar to lexeme */
-void addChar()
+/* addChar - add nextChar to lexeme (long lexemes are truncated) */
+void addChar(void)
 {
-    if (lexLen < (int)sizeof lexeme - 1)
+    if (lexLen < LEXEME_MAX - 1)
     {
         lexeme[lexLen++] = (char)nextChar;
         lexeme[lexLen] = 0;
     }
     else
-        printf("Error - lexeme is too long \n");
+        lexTruncated = 1;
 }
 
 /*****************************************************/
@@ -323,7 +497,7 @@ void pushBracket(char open)
         bracketTop++;
     }
     else
-        printf("Error - brackets nested too deeply \n");
+        reportError(lineNo, "brackets nested too deeply", NULL);
 }
 
 /*****************************************************/
@@ -332,11 +506,12 @@ void pushBracket(char open)
 void popBracket(char close)
 {
     char open;
+    char msg[96];
 
     if (bracketTop == 0)
     {
-        printf("Error - '%c' on line %d has no matching opening bracket \n",
-               close, lineNo);
+        snprintf(msg, sizeof msg, "'%c' has no matching opening bracket", close);
+        reportError(lineNo, msg, NULL);
         return;
     }
     bracketTop--;
@@ -344,27 +519,36 @@ void popBracket(char close)
     if ((open == '(' && close != ')') ||
         (open == '[' && close != ']') ||
         (open == '{' && close != '}'))
-        printf("Error - '%c' on line %d does not match '%c' from line %d \n",
-               close, lineNo, open, bracketLine[bracketTop]);
+    {
+        snprintf(msg, sizeof msg, "'%c' does not match '%c' from line %d",
+                 close, open, bracketLine[bracketTop]);
+        reportError(lineNo, msg, NULL);
+    }
 }
 
 /*****************************************************/
 /* checkUnclosed - any bracket still on the stack at end of input
-   was never closed */
-void checkUnclosed()
+   was never closed; it is written to the table as INVALID */
+void checkUnclosed(void)
 {
     while (bracketTop > 0)
     {
+        char msg[96];
         bracketTop--;
-        printf("Error - '%c' from line %d is never closed \n",
-               bracketStack[bracketTop], bracketLine[bracketTop]);
+        snprintf(msg, sizeof msg, "'%c' is never closed", bracketStack[bracketTop]);
+        reportError(bracketLine[bracketTop], msg, NULL);
+        lexLen = 0;
+        lexeme[0] = '\0';
+        lexeme[lexLen++] = bracketStack[bracketTop];
+        lexeme[lexLen] = '\0';
+        finish(TOKEN_ERROR);
     }
 }
 
 /*****************************************************/
 /* getChar - get the next character and its class.
    Supports ASCII characters and Ñ / ñ only. */
-void getChar()
+void getChar(void)
 {
     static int enyeContinuation = 0;
     int c = getc(in_fp);
@@ -417,45 +601,131 @@ void getChar()
 }
 
 /*****************************************************/
-/* getNonBlank - skip whitespace and comments (# / ## ... ##) */
-void getNonBlank()
+/* lexComment - "# ..." (line) or "## ... ##" (block).  nextChar is '#'. */
+int lexComment(void)
 {
-    while (isspace((unsigned char)nextChar) || nextChar == '#')
+    addChar(); /* first '#' */
+    if (peekChar() == '#') /* block comment */
     {
-        if (isspace((unsigned char)nextChar))
+        int closed = 0;
+
+        getChar();
+        addChar(); /* second '#' */
+        getChar();
+        while (nextChar != EOF)
         {
+            if (nextChar == '#' && peekChar() == '#')
+            {
+                addChar();
+                getChar();
+                addChar();
+                getChar();
+                closed = 1;
+                break;
+            }
+            addChar();
             getChar();
         }
-        else if (nextChar == '#')
+        if (!closed)
         {
-            if (peekChar() == '#')
-            {
-                getChar();
-                getChar();
-                while (nextChar != EOF)
-                {
-                    if (nextChar == '#' && peekChar() == '#')
-                    {
-                        getChar();
-                        getChar();
-                        break;
-                    }
-                    getChar();
-                }
-            }
-            else
-            {
-                while (nextChar != EOF && nextChar != '\n')
-                    getChar();
-            }
+            reportError(tokLine, "unterminated block comment", NULL);
+            return finish(TOKEN_ERROR);
         }
+        return finish(BLOCK_COMMENT);
     }
+
+    getChar();
+    while (nextChar != EOF && nextChar != '\n')
+    {
+        addChar();
+        getChar();
+    }
+    if (lexLen > 0 && lexeme[lexLen - 1] == '\r') /* CRLF files */
+        lexeme[--lexLen] = '\0';
+    return finish(LINE_COMMENT);
 }
 
 /*****************************************************/
-/* lex - a lexical analyzer for Tagpy: tokens plus the
-   NEWLINE / INDENT / DEDENT layout tokens */
-int lex()
+/* lexString - "text" or 'text'.  nextChar is the opening quote. */
+int lexString(int quote)
+{
+    addChar(); /* opening quote */
+    getChar();
+    while (nextChar != EOF && nextChar != '\n' && nextChar != quote)
+    {
+        if (nextChar == '\\') /* escape: keep the next character as-is */
+        {
+            addChar();
+            getChar();
+            if (nextChar == EOF || nextChar == '\n')
+                break;
+        }
+        addChar();
+        getChar();
+    }
+    if (nextChar == quote)
+    {
+        addChar();
+        getChar();
+        return finish(STRING_LIT);
+    }
+    reportError(tokLine, "unterminated string", lexeme);
+    return finish(TOKEN_ERROR); /* newline / EOF is left for lex() */
+}
+
+/*****************************************************/
+/* lexNumber - integer or float literal.  Digits followed directly by
+   letters (3x) are one INVALID token. */
+int lexNumber(void)
+{
+    int tok = INT_LIT;
+
+    while (charClass == DIGIT)
+    {
+        addChar();
+        getChar();
+    }
+    if (nextChar == '.' && isdigit(peekChar())) /* float literal */
+    {
+        addChar(); /* the '.' */
+        getChar();
+        while (charClass == DIGIT)
+        {
+            addChar();
+            getChar();
+        }
+        tok = FLOAT_LIT;
+    }
+    if (charClass == LETTER || nextChar == '_')
+    {
+        while (charClass == LETTER || charClass == DIGIT || nextChar == '_')
+        {
+            addChar();
+            getChar();
+        }
+        reportError(tokLine, "invalid number or identifier", lexeme);
+        return finish(TOKEN_ERROR);
+    }
+    return finish(tok);
+}
+
+/*****************************************************/
+/* lexNonAscii - a run of bytes >= 0x80 that is not Ñ / ñ is INVALID */
+int lexNonAscii(void)
+{
+    while (nextChar != EOF && nextChar >= 0x80 && charClass == UNKNOWN)
+    {
+        addChar();
+        getChar();
+    }
+    reportError(tokLine, "unsupported non-ASCII character", NULL);
+    return finish(TOKEN_ERROR);
+}
+
+/*****************************************************/
+/* lex - scan one token.  Besides the real tokens it produces the
+   NEWLINE / INDENT / DEDENT layout tokens (off-side rule). */
+int lex(void)
 {
     lexLen = 0;
     lexeme[0] = '\0';
@@ -463,254 +733,135 @@ int lex()
     if (pending_dedents > 0)
     {
         pending_dedents--;
-        nextToken = TOKEN_DEDENT;
-        snprintf(lexeme, sizeof lexeme, "DEDENT");
-        printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-        return nextToken;
+        return finishText(TOKEN_DEDENT, "DEDENT");
     }
 
     for (;;)
     {
-        if (is_at_line_start)
+        /* start of a line: measure its indentation (not inside brackets) */
+        if (is_at_line_start && bracketTop == 0)
         {
             int space_count = 0;
 
-            while (nextChar == ' ' || nextChar == '\t')
+            while (nextChar == ' ' || nextChar == '\t' || nextChar == '\r')
             {
-                space_count += (nextChar == '\t') ? 4 : 1;
+                if (nextChar == ' ')
+                    space_count++;
+                else if (nextChar == '\t')
+                    space_count += TAB_WIDTH;
                 getChar();
             }
 
-            /* Ignore blank lines and comment-only lines. */
-            if (nextChar == '\n' || (nextChar == '\r' && peekChar() == '\n'))
+            if (nextChar == '\n') /* blank line */
             {
                 getChar();
-                if (nextChar == '\n')
-                    getChar();
                 continue;
             }
-
-            if (nextChar == '#')
+            if (nextChar == EOF || nextChar == '#')
             {
-                if (peekChar() == '#')
+                /* comment-only lines never change the indentation */
+                is_at_line_start = 0;
+            }
+            else
+            {
+                is_at_line_start = 0;
+                if (space_count > indent_stack[indent_top])
                 {
-                    getChar();
-                    getChar();
-                    while (charClass != EOF)
+                    if (indent_top >= MAX_INDENT_DEPTH - 1)
                     {
-                        if (nextChar == '#' && peekChar() == '#')
-                        {
-                            getChar();
-                            getChar();
-                            break;
-                        }
-                        if (nextChar == '\n')
-                        {
-                            is_at_line_start = 1;
-                            line_has_token = 0;
-                        }
-                        getChar();
+                        tokLine = lineNo;
+                        reportError(tokLine, "indentation too deep", NULL);
+                        return finishText(TOKEN_ERROR, "INDENT");
                     }
-                    if (is_at_line_start)
-                        continue;
+                    indent_stack[++indent_top] = space_count;
+                    return finishText(TOKEN_INDENT, "INDENT");
                 }
-                else
+                if (space_count < indent_stack[indent_top])
                 {
-                    while (charClass != EOF && nextChar != '\n')
-                        getChar();
-                    if (nextChar == '\n')
-                        getChar();
-                    continue;
+                    while (indent_top > 0 && space_count < indent_stack[indent_top])
+                    {
+                        indent_top--;
+                        pending_dedents++;
+                    }
+                    if (space_count != indent_stack[indent_top])
+                    {
+                        tokLine = lineNo;
+                        reportError(tokLine,
+                                    "unindent does not match any outer indentation level",
+                                    NULL);
+                        return finishText(TOKEN_ERROR, "BAD_DEDENT");
+                    }
+                    pending_dedents--;
+                    return finishText(TOKEN_DEDENT, "DEDENT");
                 }
-            }
-
-            if (charClass == EOF)
-            {
-                if (indent_top > 0)
-                {
-                    pending_dedents = indent_top - 1;
-                    indent_top = 0;
-                    nextToken = TOKEN_DEDENT;
-                    snprintf(lexeme, sizeof lexeme, "DEDENT");
-                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                    return nextToken;
-                }
-                nextToken = EOF;
-                strcpy(lexeme, "EOF");
-                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                return nextToken;
-            }
-
-            is_at_line_start = 0;
-            if (space_count > indent_stack[indent_top])
-            {
-                if (indent_top >= MAX_INDENT_DEPTH - 1)
-                {
-                    printf("Error: Indentation too deep.\n");
-                    nextToken = TOKEN_ERROR;
-                    strcpy(lexeme, "ERROR");
-                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                    return nextToken;
-                }
-                indent_stack[++indent_top] = space_count;
-                nextToken = TOKEN_INDENT;
-                strcpy(lexeme, "INDENT");
-                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                return nextToken;
-            }
-            if (space_count < indent_stack[indent_top])
-            {
-                while (indent_top > 0 && space_count < indent_stack[indent_top])
-                {
-                    indent_top--;
-                    pending_dedents++;
-                }
-                if (space_count != indent_stack[indent_top])
-                {
-                    printf("Error: Unindent does not match any outer indentation level.\n");
-                    nextToken = TOKEN_ERROR;
-                    strcpy(lexeme, "ERROR");
-                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                    return nextToken;
-                }
-                pending_dedents--;
-                nextToken = TOKEN_DEDENT;
-                strcpy(lexeme, "DEDENT");
-                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                return nextToken;
             }
         }
 
-        if (nextChar == '#')
+        /* blanks and line ends inside a line */
+        if (nextChar == ' ' || nextChar == '\t' || nextChar == '\r' ||
+            nextChar == '\f' || nextChar == '\v')
         {
-            if (peekChar() == '#')
-            {
-                getChar();
-                getChar();
-                while (charClass != EOF)
-                {
-                    if (nextChar == '#' && peekChar() == '#')
-                    {
-                        getChar();
-                        getChar();
-                        break;
-                    }
-                    if (nextChar == '\n' && bracketTop == 0)
-                    {
-                        is_at_line_start = 1;
-                        line_has_token = 0;
-                    }
-                    getChar();
-                }
-                continue;
-            }
-            while (charClass != EOF && nextChar != '\n')
-                getChar();
+            getChar();
             continue;
         }
-
-        if (nextChar != EOF && isspace((unsigned char)nextChar))
+        if (nextChar == '\n')
         {
-            if (nextChar == '\n')
-            {
-                getChar();
-                /* a newline inside ( ) [ ] { } does not end the statement
-                   and the next line's indentation is not measured */
-                if (bracketTop > 0)
-                    continue;
-                is_at_line_start = 1;
-                if (line_has_token)
-                {
-                    line_has_token = 0;
-                    nextToken = TOKEN_NEWLINE;
-                    strcpy(lexeme, "NEWLINE");
-                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-                    return nextToken;
-                }
-                continue;
-            }
             getChar();
+            /* a newline inside ( ) [ ] { } does not end the statement
+               and the next line's indentation is not measured */
+            if (bracketTop > 0)
+                continue;
+            is_at_line_start = 1;
+            if (line_has_token)
+            {
+                line_has_token = 0;
+                return finishText(TOKEN_NEWLINE, "\n");
+            }
             continue;
         }
         break;
     }
 
-    switch (charClass)
+    tokLine = lineNo;
+
+    if (nextChar == EOF)
     {
-    /* identifiers, keywords, noise words */
-    case LETTER:
-        nextToken = keyword_lookup();
-        break;
-    /* integer and float literals */
-    case DIGIT:
-        addChar();
-        getChar();
-        while (charClass == DIGIT)
-        {
-            addChar();
-            getChar();
-        }
-        if (nextChar == '.' && isdigit(peekChar())) /* float literal */
-        {
-            addChar(); /* the '.' */
-            getChar();
-            while (charClass == DIGIT)
-            {
-                addChar();
-                getChar();
-            }
-            nextToken = FLOAT_LIT;
-        }
-        else
-            nextToken = INT_LIT;
-        break;
-    /* parentheses, operators, delimiters, strings */
-    case UNKNOWN:
-        if (nextChar >= 0x80)
-        {
-            fprintf(stderr,
-                    "Lexical error: unsupported non-ASCII character at line %d\n",
-                    lineNo);
-            exit(1);
-        }
-        skipAdvance = 0;
-        lookup(nextChar);
-        if (!skipAdvance)
-            getChar();
-        skipAdvance = 0;
-        break;
-    case EOF:
         /* the file ended without a final newline: close the last statement */
         if (line_has_token)
         {
             line_has_token = 0;
-            nextToken = TOKEN_NEWLINE;
-            strcpy(lexeme, "NEWLINE");
-            printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-            return nextToken;
+            return finishText(TOKEN_NEWLINE, "\n");
         }
         if (indent_top > 0)
         {
             pending_dedents = indent_top - 1;
             indent_top = 0;
-            nextToken = TOKEN_DEDENT;
-            strcpy(lexeme, "DEDENT");
-            printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
-            return nextToken;
+            return finishText(TOKEN_DEDENT, "DEDENT");
         }
         nextToken = EOF;
-        strcpy(lexeme, "EOF");
-        break;
-    } /* End of switch */
-    if (nextToken != EOF)
-        line_has_token = 1;
-    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+        return nextToken; /* EOF is not a lexeme: nothing is written */
+    }
+
+    if (nextChar == '#')
+        return lexComment();
+    if (charClass == LETTER || nextChar == '_')
+        return finish(keyword_lookup()); /* keyword / noise word / identifier */
+    if (charClass == DIGIT)
+        return lexNumber();
+    if (nextChar == '"' || nextChar == '\'')
+        return lexString(nextChar);
+    if (nextChar >= 0x80)
+        return lexNonAscii();
+
+    /* operators and delimiters */
+    lookup(nextChar);
+    getChar();
     return nextToken;
-} /* End of function lex */
+}
 
 /*****************************************************/
-/* keyword_lookup - keywords, noise words, and identifiers using a
-   DFA state machine (case-insensitive).
+/* keyword_lookup - keywords, reserved words, noise words, and
+   identifiers using a DFA state machine (case-insensitive).
    "ng" is a normal identifier. "ang" and "ay" are noise words. */
 int keyword_lookup()
 {

@@ -1,60 +1,68 @@
-# Getting Started
+# Tagpy Lexical Analyzer
 
-## Usage Instructions
+COSC 303 – Principles of Programming Languages. A hand-written lexical analyzer
+for **Tagpy**. Tokenization is done with a finite automaton (`keyword_lookup`
+is a DFA) plus one-character lookahead for operators; no premade lexer and no
+string-comparison / word-matching functions are used.
 
-1. **Copy the files** to your local machine.
-2. **Modify input equation:** Update the `front.in` file with your desired expression.
-   
-   *Example `front.in`:*
-   ```text
-   x = 20 + 3
-   ```
+## Input file type
 
-3. **Compile the program:**
-   ```bash
-   gcc front.c -o front.exe
-   ```
+Tagpy source files use the **`.tagpy`** extension (the analyzer rejects other
+extensions).
 
-4. **Run the executable:**
-   ```bash
-   ./front.exe
-   ```
+## Compile
 
-### Fixed-Field Lexer
+Single source file, so no build script is needed:
 
-The original Tagpy lexer remains the default. To use the fixed-field lexer,
-change `fixed_field_mode` to `1` in `front.c`. It emits one token for each
-configured field, including empty fields. Each token exposes its source
-position through `tokenLine` and `tokenColumn`, and its field name through
-`tokenFieldName`.
+```bash
+gcc front.c -o front          # Linux / macOS
+gcc front.c -o front.exe      # Windows (MinGW)
+```
 
-The default layout is FORTRAN-style, with 1-based inclusive columns:
+## Run
 
-| Field | Columns | Token |
-|---|---:|---|
-| label | 1-5 | `FIXED_FIELD_LABEL` |
-| continuation | 6 | `FIXED_FIELD_CONTINUATION` |
-| statement | 7-72 | `FIXED_FIELD_STATEMENT` |
-| sequence | 73-80 | `FIXED_FIELD_SEQUENCE` |
+```bash
+./front sample.tagpy          # or: front.exe sample.tagpy
+```
 
-Edit `fixedFieldLayout` and `fixedFieldCount` in `front.c` to configure another
-layout. Short lines produce empty values for fields beyond the line. Text past
-the last configured column is ignored. Tabs expand to the next 8-column tab
-stop before columns are counted. Blank lines and lines beginning with `C`,
-`c`, `*`, `!`, or `#` in column 1 are skipped. A nonblank, nonzero continuation
-field appends that line's statement field to the preceding statement; a
-continuation without a preceding statement is reported as an error. Field
-columns and concatenated statement length are limited by `MAX_FIXED_COLUMNS`.
-The queued fields for one logical statement are limited by `MAX_FIXED_TOKENS`.
-Increase these constants if your format needs larger limits.
-
-### Expected Output
+With no argument it reads `sample.tagpy`. The output is written to
+**`Symbol Table.txt`** in the current folder:
 
 ```text
-Next token is: 11, Next lexeme is x
-Next token is: 20, Next lexeme is =
-Next token is: 10, Next lexeme is 20
-Next token is: 21, Next lexeme is +
-Next token is: 10, Next lexeme is 3
-Next token is: -1, Next lexeme is EOF
+TOKEN TYPE              LEXEME
+----------              ------
+LINE_COMMENT            # global state
+RW_NUM                  num
+IDENTIFIER              a
+ASSIGN                  =
+INT_LITERAL             10
+NEWLINE                 \n
 ```
+
+Invalid input is reported on the screen with its line number **and** written
+to the table as `INVALID`; the analyzer keeps scanning afterwards.
+
+## What is recognized
+
+| Category | Token types |
+|---|---|
+| Identifier | `IDENTIFIER` (letters, digits, `_`, Ñ/ñ; case-insensitive keywords) |
+| Key words | `KW_KUNG`, `KW_KUNDIKUNG`, `KW_KUNDI`, `KW_BAWAT`, `KW_SA`, `KW_ITUKOY`, `KW_IBALIK`, `KW_SURI`, `KW_SAKALI` |
+| Reserved words | `RW_NUM`, `RW_TUL`, `RW_BAKA`, `RW_KAR`, `RW_PISI`, `RW_LISTA`, `RW_SULAT`, `RW_SULATLN`, `RW_KUNIN` |
+| Constants | `INT_LITERAL`, `FLOAT_LITERAL`, `STRING_LITERAL` (`"…"` or `'…'`), `TRUE_LITERAL` (`totoo`), `FALSE_LITERAL` (`palso`) |
+| Noise words | `NOISE_WORD` (`ang`, `ay`) |
+| Comments | `LINE_COMMENT` (`# …`), `BLOCK_COMMENT` (`## … ##`) |
+| Arithmetic operators (7) | `ADD +`, `SUBTRACT -`, `MULTIPLY *`, `DIVIDE /`, `EXPONENT **`, `MODULO %`, `FLOOR_DIVIDE //` |
+| Boolean operators (9) | `EQUAL ==`, `NOT_EQUAL !=`, `LESS_THAN <`, `GREATER_THAN >`, `LESS_EQUAL <=`, `GREATER_EQUAL >=`, `AND at`, `OR o`, `NOT hindi` |
+| Assignment | `ASSIGN =` |
+| Delimiters / brackets | `LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE COLON COMMA SEMICOLON DOT` |
+| Layout (off-side rule) | `NEWLINE`, `INDENT`, `DEDENT` (set `SHOW_LAYOUT_IN_TABLE` to 0 in `front.c` to hide them) |
+| Invalid | `INVALID` – unknown characters, lone `!`, unterminated strings / block comments, numbers glued to letters (`3x`), unsupported non-ASCII, unmatched or unclosed brackets, bad indentation |
+
+## Test files
+
+| File | Purpose |
+|---|---|
+| `sample.tagpy` | One example of every token class |
+| `keyword_test.tagpy` | Keywords vs. identifiers (`kung`, `kungx`, `Kung`, `num1`, `ng`, Ñ/ñ) |
+| `invalid_test.tagpy` | Invalid-token handling |
