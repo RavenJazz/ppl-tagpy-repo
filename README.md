@@ -47,8 +47,9 @@ to the table as `INVALID`; the analyzer keeps scanning afterwards.
 | Category | Token types |
 |---|---|
 | Identifier | `IDENTIFIER` (letters, digits, `_`, Ñ/ñ; case-insensitive keywords) |
-| Key words | `KW_KUNG`, `KW_KUNDIKUNG`, `KW_KUNDI`, `KW_BAWAT`, `KW_SA`, `KW_ITUKOY`, `KW_IBALIK`, `KW_SURI`, `KW_SAKALI` |
-| Reserved words | `RW_NUM`, `RW_TUL`, `RW_BAKA`, `RW_KAR`, `RW_PISI`, `RW_LISTA`, `RW_SULAT`, `RW_SULATLN`, `RW_KUNIN` |
+| Keyword **and** reserved word (proposal §4) | `KWRW_KUNG`, `KWRW_KUNDIKUNG`, `KWRW_KUNDI`, `KWRW_BAWAT`, `KWRW_SA`, `KWRW_ITUKOY`, `KWRW_IBALIK`; also `at`, `o`, `hindi` (listed under operators) |
+| Keyword only | `KW_SURI`, `KW_SAKALI`, `KW_NUM`, `KW_TUL`, `KW_BAKA`, `KW_KAR`, `KW_PISI`, `KW_LISTA`, `KW_SULAT`, `KW_SULATLN`, `KW_KUNIN` |
+| Reserved word only | `Totoo` / `Palso` (written as `TRUE_LITERAL` / `FALSE_LITERAL`) |
 | Constants | `INT_LITERAL`, `FLOAT_LITERAL`, `STRING_LITERAL` (`"…"` or `'…'`), `TRUE_LITERAL` (`totoo`), `FALSE_LITERAL` (`palso`) |
 | Noise words | `NOISE_WORD` (`ang`, `ay`) |
 | Comments | `LINE_COMMENT` (`# …`), `BLOCK_COMMENT` (`## … ##`) |
@@ -66,3 +67,4 @@ to the table as `INVALID`; the analyzer keeps scanning afterwards.
 | `sample.tagpy` | One example of every token class |
 | `keyword_test.tagpy` | Keywords vs. identifiers (`kung`, `kungx`, `Kung`, `num1`, `ng`, Ñ/ñ) |
 | `invalid_test.tagpy` | Invalid-token handling |
+| `proposal.tagpy` | Every code snippet from the Group 5 proposal |

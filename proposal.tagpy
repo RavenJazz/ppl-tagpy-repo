@@ -1,0 +1,50 @@
+## Tagpy proposal snippets
+   block comment ##
+# Ito ay line comment
+num a = 6 + 7
+num b = 6 - 7
+num c = 6 * 7
+tul d = 6 / 4
+num e = 6 ** 2
+num f = 6 % 4
+num g = 6 // 4
+baka h = (6 == 7)
+baka i = (6 != 7)
+baka j = (6 < 7)
+baka k = (6 > 7)
+baka l = (6 <= 7)
+baka m = (6 >= 7)
+baka n = (6 > 5) at (7 < 10)
+baka o1 = (6 > 5) o (7 > 10)
+baka p = hindi (6 > 7)
+baka q = (Totoo)
+baka r = Palso
+pisi s = "Kamusta" + "Mundo"
+pisi t = "ha" * 3
+kar u = "computer"[0]
+baka v = ("abc" == "adc")
+sulat("Kamusta")
+sulatln("Kamusta")
+num w = kunin("Enter a number: ")
+sulat("The number you entered is " + w)
+kung (edad >= 18):
+    sulatln("ang sinabi ay totoo")
+kundikung (edad == 17):
+    sulatln("malapit na maging sakto")
+kundi:
+    sulatln("ang sinabi ay mali")
+bawat x sa 10:
+    sulatln("Hello")
+lista myArray = [10, 20, 30]
+lista d2 = {1, 2}
+kar ch = 'A'
+itukoy kwadrado(num x):
+    ibalik x ** 2
+suri a:
+    sakali 1:
+        sulat('say "hi"')
+Student_course = 1
+student_1 = 2
+ñoño = 3
+Ngipin = ng + NG + Ng
+ang numero ay 5
