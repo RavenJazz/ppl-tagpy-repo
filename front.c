@@ -99,6 +99,10 @@ int lineNo = 1;
 /* [DELIM] Brace tokens for the mapped collection (dictionaries and sets) */
 #define LEFT_BRACE 65  /* { */
 #define RIGHT_BRACE 66 /* } */
+#define KW_ITUKOY 67 /* itukoy */
+#define KW_IBALIK 68 /* ibalik */
+#define KW_SURI   69 /* suri   */
+#define KW_SAKALI 70 /* sakali */
 /******************************************************/
 /* main driver */
 int main()
@@ -676,6 +680,9 @@ int keyword_lookup()
         case 't': /* [STMT] start of 't...' */
             state = 63;
             break;
+        case 'i': /* [KWD] itukoy, ibalik */
+            state = 66; 
+            break;
         default:  
             state = 99; //sink state for identifiers
             break;
@@ -909,9 +916,10 @@ int keyword_lookup()
                 else state = 99;
                 break;
 
-            /* [STMT] state 57 = 'su' */
+            /* [STMT] state 57 = 'su' -> 'sul' (sulat/sulatln) or 'sur' (suri) */
             case 57:
                 if (nextChar == 'l') state = 58;
+                else if (nextChar == 'r') state = 77;
                 else state = 99;
                 break;
 
@@ -949,6 +957,77 @@ int keyword_lookup()
             case 64:
                 if (nextChar == 'l') state = 65;
                 else state = 99;
+                break;
+            
+            case 66:
+                if (nextChar == 't') state = 67;
+                else if (nextChar == 'b') state = 72;
+                else state = 99;
+                break;
+
+            case 67: 
+                if (nextChar == 'u') state = 68; 
+                else state = 99; 
+                break;
+
+            case 68: 
+                if (nextChar == 'k') state = 69; 
+                else state = 99; 
+                break;
+
+            case 69: 
+                if (nextChar == 'o') state = 70; 
+                else state = 99; 
+                break;
+
+            case 70: 
+                if (nextChar == 'y') state = 71; 
+                else state = 99; 
+                break;
+
+            case 72: 
+                if (nextChar == 'a') state = 73; 
+                else state = 99; 
+                break;
+
+            case 73: 
+                if (nextChar == 'l') state = 74; 
+                else state = 99; 
+                break;
+
+            case 74: 
+                if (nextChar == 'i') state = 75; 
+                else state = 99; 
+                break;
+
+            case 75: 
+                if (nextChar == 'k') state = 76; 
+                else state = 99; 
+                break;
+
+            case 56: 
+                if (nextChar == 'k') state = 79; 
+                else state = 99; 
+                break;
+
+            case 79: 
+                if (nextChar == 'a') state = 80; 
+                else state = 99; 
+                break;
+
+            case 80: 
+                if (nextChar == 'l') state = 81; 
+                else state = 99; 
+                break;
+
+            case 81: 
+                if (nextChar == 'i') state = 82; 
+                else state = 99; 
+                break;
+
+            case 77: 
+                if (nextChar == 'i') state = 78; 
+                else state = 99; 
                 break;
 
             default: //sink state
@@ -1000,6 +1079,14 @@ int keyword_lookup()
         return IO_SULATLN; /* sulatln */
     if (state == 65)
         return TYPE_TUL; /* tul */
+    if (state == 71) 
+        return KW_ITUKOY;
+    if (state == 76) 
+        return KW_IBALIK;
+    if (state == 78) 
+        return KW_SURI;
+    if (state == 82) 
+        return KW_SAKALI;
     if (state == 2 || state == 4) {
         return NOISE_WORD;
     } else {
