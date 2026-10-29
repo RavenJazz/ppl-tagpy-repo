@@ -56,52 +56,69 @@ int lineNo = 1;
 #define DIV_OP 24
 #define LEFT_PAREN 25
 #define RIGHT_PAREN 26
+/* Arithmetic operator tokens */
 #define EXP_OP 27       /* **  */
 #define MOD_OP 28       /* %   */
 #define FLOOR_DIV_OP 29 /* //  */
-#define EQ_OP 30        /* == */
-#define NEQ_OP 31       /* != */
-#define LT_OP 32        /* <  */
-#define GT_OP 33        /* >  */
-#define LE_OP 34        /* <= */
-#define GE_OP 35        /* >= */
-#define AT_OP 36        /* at    */
-#define O_OP 37         /* o     */
-#define HINDI_OP 38     /* hindi */
-#define TRUE_LIT 39     /* totoo */
-#define FALSE_LIT 40    /* palso */
-#define FLOAT_LIT 41    /* 10.5  */
-#define STRING_LIT 42   /* "text" or 'text' */
-#define LEFT_BRACKET 43
-#define RIGHT_BRACKET 44
-#define KW_KUNG 45
-#define KW_KUNDIKUNG 46
-#define KW_KUNDI 47
-#define KW_BAWAT 48
-#define KW_SA 49
-#define TYPE_NUM 50
-#define TYPE_TUL 51
-#define TYPE_BAKA 52
-#define TYPE_KAR 53
-#define TYPE_PISI 54
-#define TYPE_LISTA 55
-#define IO_SULAT 56
-#define IO_SULATLN 57
-#define IO_KUNIN 58
-#define COLON 59
-#define COMMA 60
+/* Boolean operator tokens */
+#define EQ_OP 30  /* == */
+#define NEQ_OP 31 /* != */
+#define LT_OP 32  /* <  */
+#define GT_OP 33  /* >  */
+#define LE_OP 34  /* <= */
+#define GE_OP 35  /* >= */
+/* [EXPR] Logical operator tokens */
+#define AT_OP 36    /* at    */
+#define O_OP 37     /* o     */
+#define HINDI_OP 38 /* hindi */
+/* [EXPR] Literal tokens */
+#define TRUE_LIT 39   /* totoo            */
+#define FALSE_LIT 40  /* palso            */
+#define FLOAT_LIT 41  /* 10.5             */
+#define STRING_LIT 42 /* "text" or 'text' */
+/* [EXPR] Index brackets */
+#define LEFT_BRACKET 43  /* [ */
+#define RIGHT_BRACKET 44 /* ] */
+/* [STMT] Statement keyword tokens */
+#define KW_KUNG 45      /* kung      */
+#define KW_KUNDIKUNG 46 /* kundikung */
+#define KW_KUNDI 47     /* kundi     */
+#define KW_BAWAT 48     /* bawat     */
+#define KW_SA 49        /* sa        */
+/* [STMT] Declaration keyword tokens */
+#define TYPE_NUM 50   /* num   */
+#define TYPE_TUL 51   /* tul   */
+#define TYPE_BAKA 52  /* baka  */
+#define TYPE_KAR 53   /* kar   */
+#define TYPE_PISI 54  /* pisi  */
+#define TYPE_LISTA 55 /* lista */
+/* [STMT] Input / output keyword tokens */
+#define IO_SULAT 56   /* sulat   */
+#define IO_SULATLN 57 /* sulatln */
+#define IO_KUNIN 58   /* kunin   */
+/* [STMT] Delimiters used by statements */
+#define COLON 59 /* : */
+#define COMMA 60 /* , */
+/* [LAYOUT] Blank space / off-side rule tokens */
 #define TOKEN_NEWLINE 61
 #define TOKEN_INDENT 62
 #define TOKEN_DEDENT 63
 #define TOKEN_ERROR 64
 #define MAX_INDENT_DEPTH 100
-#define LEFT_BRACE 65
-#define RIGHT_BRACE 66
+/* [DELIM] Brace tokens for dictionaries and sets */
+#define LEFT_BRACE 65  /* { */
+#define RIGHT_BRACE 66 /* } */
+/* [KWD] Function / type keyword tokens */
+#define KW_ITUKOY 67 /* itukoy */
+#define KW_IBALIK 68 /* ibalik */
+#define KW_SURI 69   /* suri   */
+#define KW_SAKALI 70 /* sakali */
 
 /******************************************************/
 /* main driver */
 int main()
 {
+    /* Open the input data file and process its contents */
     if ((in_fp = fopen("front.in", "r")) == NULL)
     {
         printf("ERROR - cannot open front.in \n");
@@ -113,13 +130,14 @@ int main()
     {
         lex();
     } while (nextToken != EOF);
-    checkUnclosed();
+    checkUnclosed(); /* report any bracket that never closed */
     fclose(in_fp);
     return 0;
 }
 
 /*****************************************************/
-/* peekChar - look at the next character without consuming it */
+/* peekChar - look at the next character without consuming it
+   (needed for two-character operators) */
 int peekChar()
 {
     int c = getc(in_fp);
@@ -154,7 +172,7 @@ int lookup(int ch)
         break;
     case '*':
         addChar();
-        if (peekChar() == '*')
+        if (peekChar() == '*') /* ** */
         {
             getChar();
             addChar();
@@ -165,7 +183,7 @@ int lookup(int ch)
         break;
     case '/':
         addChar();
-        if (peekChar() == '/')
+        if (peekChar() == '/') /* // */
         {
             getChar();
             addChar();
@@ -180,7 +198,7 @@ int lookup(int ch)
         break;
     case '=':
         addChar();
-        if (peekChar() == '=')
+        if (peekChar() == '=') /* == */
         {
             getChar();
             addChar();
@@ -191,7 +209,7 @@ int lookup(int ch)
         break;
     case '!':
         addChar();
-        if (peekChar() == '=')
+        if (peekChar() == '=') /* != */
         {
             getChar();
             addChar();
@@ -205,7 +223,7 @@ int lookup(int ch)
         break;
     case '<':
         addChar();
-        if (peekChar() == '=')
+        if (peekChar() == '=') /* <= */
         {
             getChar();
             addChar();
@@ -216,7 +234,7 @@ int lookup(int ch)
         break;
     case '>':
         addChar();
-        if (peekChar() == '=')
+        if (peekChar() == '=') /* >= */
         {
             getChar();
             addChar();
@@ -295,6 +313,7 @@ void addChar()
 }
 
 /*****************************************************/
+/* pushBracket - remember an opening bracket ( [ { and its line */
 void pushBracket(char open)
 {
     if (bracketTop < MAX_BRACKET_DEPTH)
@@ -308,6 +327,8 @@ void pushBracket(char open)
 }
 
 /*****************************************************/
+/* popBracket - check that a closing bracket matches the most
+   recent open bracket */
 void popBracket(char close)
 {
     char open;
@@ -328,6 +349,8 @@ void popBracket(char close)
 }
 
 /*****************************************************/
+/* checkUnclosed - any bracket still on the stack at end of input
+   was never closed */
 void checkUnclosed()
 {
     while (bracketTop > 0)
@@ -339,7 +362,8 @@ void checkUnclosed()
 }
 
 /*****************************************************/
-/* getChar - supports ASCII characters and Ñ / ñ only */
+/* getChar - get the next character and its class.
+   Supports ASCII characters and Ñ / ñ only. */
 void getChar()
 {
     static int enyeContinuation = 0;
@@ -393,6 +417,7 @@ void getChar()
 }
 
 /*****************************************************/
+/* getNonBlank - skip whitespace and comments (# / ## ... ##) */
 void getNonBlank()
 {
     while (isspace((unsigned char)nextChar) || nextChar == '#')
@@ -428,6 +453,8 @@ void getNonBlank()
 }
 
 /*****************************************************/
+/* lex - a lexical analyzer for Tagpy: tokens plus the
+   NEWLINE / INDENT / DEDENT layout tokens */
 int lex()
 {
     lexLen = 0;
@@ -454,6 +481,7 @@ int lex()
                 getChar();
             }
 
+            /* Ignore blank lines and comment-only lines. */
             if (nextChar == '\n' || (nextChar == '\r' && peekChar() == '\n'))
             {
                 getChar();
@@ -586,6 +614,8 @@ int lex()
             if (nextChar == '\n')
             {
                 getChar();
+                /* a newline inside ( ) [ ] { } does not end the statement
+                   and the next line's indentation is not measured */
                 if (bracketTop > 0)
                     continue;
                 is_at_line_start = 1;
@@ -607,9 +637,11 @@ int lex()
 
     switch (charClass)
     {
+    /* identifiers, keywords, noise words */
     case LETTER:
         nextToken = keyword_lookup();
         break;
+    /* integer and float literals */
     case DIGIT:
         addChar();
         getChar();
@@ -618,9 +650,9 @@ int lex()
             addChar();
             getChar();
         }
-        if (nextChar == '.' && isdigit(peekChar()))
+        if (nextChar == '.' && isdigit(peekChar())) /* float literal */
         {
-            addChar();
+            addChar(); /* the '.' */
             getChar();
             while (charClass == DIGIT)
             {
@@ -632,6 +664,7 @@ int lex()
         else
             nextToken = INT_LIT;
         break;
+    /* parentheses, operators, delimiters, strings */
     case UNKNOWN:
         if (nextChar >= 0x80)
         {
@@ -647,6 +680,7 @@ int lex()
         skipAdvance = 0;
         break;
     case EOF:
+        /* the file ended without a final newline: close the last statement */
         if (line_has_token)
         {
             line_has_token = 0;
@@ -667,16 +701,17 @@ int lex()
         nextToken = EOF;
         strcpy(lexeme, "EOF");
         break;
-    }
+    } /* End of switch */
     if (nextToken != EOF)
         line_has_token = 1;
     printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
     return nextToken;
-}
+} /* End of function lex */
 
 /*****************************************************/
-/* keyword_lookup - keywords, noise words, identifiers.
-   "ng" is now a normal identifier. "ang" and "ay" remain noise words. */
+/* keyword_lookup - keywords, noise words, and identifiers using a
+   DFA state machine (case-insensitive).
+   "ng" is a normal identifier. "ang" and "ay" are noise words. */
 int keyword_lookup()
 {
     int state = 0;
@@ -715,6 +750,9 @@ int keyword_lookup()
     case 's':
         state = 55;
         break;
+    case 'i':
+        state = 66;
+        break; /* itukoy, ibalik */
     default:
         state = 99;
         break;
@@ -729,6 +767,7 @@ int keyword_lookup()
 
         switch (state)
         {
+        /* a... : ay, ang, at */
         case 1:
             if (ch == 'y')
                 state = 2;
@@ -742,6 +781,8 @@ int keyword_lookup()
         case 3:
             state = (ch == 'g') ? 4 : 99;
             break;
+
+        /* hindi: 7-11 */
         case 7:
             state = (ch == 'i') ? 8 : 99;
             break;
@@ -754,6 +795,8 @@ int keyword_lookup()
         case 10:
             state = (ch == 'i') ? 11 : 99;
             break;
+
+        /* totoo: 12-16, tul: 12,64,65 */
         case 12:
             if (ch == 'o')
                 state = 13;
@@ -771,6 +814,11 @@ int keyword_lookup()
         case 15:
             state = (ch == 'o') ? 16 : 99;
             break;
+        case 64:
+            state = (ch == 'l') ? 65 : 99;
+            break;
+
+        /* palso: 17-21, pisi: 17,52-54 */
         case 17:
             if (ch == 'a')
                 state = 18;
@@ -788,6 +836,14 @@ int keyword_lookup()
         case 20:
             state = (ch == 'o') ? 21 : 99;
             break;
+        case 52:
+            state = (ch == 's') ? 53 : 99;
+            break;
+        case 53:
+            state = (ch == 'i') ? 54 : 99;
+            break;
+
+        /* baka, bawat: 22-28 */
         case 22:
             state = (ch == 'a') ? 23 : 99;
             break;
@@ -808,6 +864,8 @@ int keyword_lookup()
         case 27:
             state = (ch == 't') ? 28 : 99;
             break;
+
+        /* kar, kung, kundi, kundikung, kunin: 29-42 */
         case 29:
             if (ch == 'a')
                 state = 30;
@@ -850,6 +908,8 @@ int keyword_lookup()
         case 41:
             state = (ch == 'n') ? 42 : 99;
             break;
+
+        /* lista: 43-47 */
         case 43:
             state = (ch == 'i') ? 44 : 99;
             break;
@@ -862,9 +922,11 @@ int keyword_lookup()
         case 46:
             state = (ch == 'a') ? 47 : 99;
             break;
+
+        /* num: 48-50 (ng is an identifier) */
         case 48:
             if (ch == 'g')
-                state = 99; /* ng is an identifier */
+                state = 99;
             else if (ch == 'u')
                 state = 49;
             else
@@ -873,12 +935,8 @@ int keyword_lookup()
         case 49:
             state = (ch == 'm') ? 50 : 99;
             break;
-        case 52:
-            state = (ch == 's') ? 53 : 99;
-            break;
-        case 53:
-            state = (ch == 'i') ? 54 : 99;
-            break;
+
+        /* s...: sa, sakali, sulat, sulatln, suri */
         case 55:
             if (ch == 'a')
                 state = 56;
@@ -887,8 +945,25 @@ int keyword_lookup()
             else
                 state = 99;
             break;
+        case 56:
+            state = (ch == 'k') ? 79 : 99;
+            break; /* sa -> sak */
+        case 79:
+            state = (ch == 'a') ? 80 : 99;
+            break;
+        case 80:
+            state = (ch == 'l') ? 81 : 99;
+            break;
+        case 81:
+            state = (ch == 'i') ? 82 : 99;
+            break;
         case 57:
-            state = (ch == 'l') ? 58 : 99;
+            if (ch == 'l')
+                state = 58;
+            else if (ch == 'r')
+                state = 77;
+            else
+                state = 99;
             break;
         case 58:
             state = (ch == 'a') ? 59 : 99;
@@ -902,16 +977,53 @@ int keyword_lookup()
         case 61:
             state = (ch == 'n') ? 62 : 99;
             break;
-        case 64:
-            state = (ch == 'l') ? 65 : 99;
+        case 77:
+            state = (ch == 'i') ? 78 : 99;
             break;
+
+        /* i...: itukoy, ibalik */
+        case 66:
+            if (ch == 't')
+                state = 67;
+            else if (ch == 'b')
+                state = 72;
+            else
+                state = 99;
+            break;
+        case 67:
+            state = (ch == 'u') ? 68 : 99;
+            break;
+        case 68:
+            state = (ch == 'k') ? 69 : 99;
+            break;
+        case 69:
+            state = (ch == 'o') ? 70 : 99;
+            break;
+        case 70:
+            state = (ch == 'y') ? 71 : 99;
+            break;
+        case 72:
+            state = (ch == 'a') ? 73 : 99;
+            break;
+        case 73:
+            state = (ch == 'l') ? 74 : 99;
+            break;
+        case 74:
+            state = (ch == 'i') ? 75 : 99;
+            break;
+        case 75:
+            state = (ch == 'k') ? 76 : 99;
+            break;
+
         default:
-            state = 99;
+            state = 99; /* sink state: identifier */
             break;
         }
         getChar();
     }
 
+    /* Return the token for the final state reached */
+    /* [EXPR] expression words */
     if (state == 5)
         return AT_OP;
     if (state == 6)
@@ -922,6 +1034,7 @@ int keyword_lookup()
         return TRUE_LIT;
     if (state == 21)
         return FALSE_LIT;
+    /* [STMT] statement keywords */
     if (state == 25)
         return TYPE_BAKA;
     if (state == 28)
@@ -950,6 +1063,15 @@ int keyword_lookup()
         return IO_SULATLN;
     if (state == 65)
         return TYPE_TUL;
+    /* [KWD] function / type keywords */
+    if (state == 71)
+        return KW_ITUKOY;
+    if (state == 76)
+        return KW_IBALIK;
+    if (state == 78)
+        return KW_SURI;
+    if (state == 82)
+        return KW_SAKALI;
 
     if (state == 2 || state == 4)
         return NOISE_WORD;
