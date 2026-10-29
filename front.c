@@ -1,14 +1,21 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+
 /* Global declarations */
 /* Variables */
 int charClass;
-char lexeme[100];
+char lexeme[1024];
 char nextChar;
 int lexLen;
 int token;
 int nextToken;
 FILE *in_fp, *fopen(const char *filename, const char *mode);
+int indent_stack[100] = {0};
+int indent_top = 0;
+int pending_dedents = 0;
+int is_at_line_start = 1;
+int line_has_token = 0;
 /* Function declarations */
 void addChar();
 void getChar();
@@ -23,7 +30,7 @@ void checkUnclosed();
 #define MAX_BRACKET_DEPTH 100
 char bracketStack[MAX_BRACKET_DEPTH];
 int bracketLine[MAX_BRACKET_DEPTH];
-int bracketTop= 0;
+int bracketTop = 0;
 int lineNo = 1;
 /* Character classes */
 #define LETTER 0
@@ -83,9 +90,15 @@ int lineNo = 1;
 /* [STMT] Delimiters used by statements */
 #define COLON 59 /* : */
 #define COMMA 60 /* , */
-/* [DELIM] Brace token for the mapped collection (dictionaries and sets) */
-#define LEFT_BRACE 61 /* { */
-#define RIGHT_BRACE 62 /* } */
+/* [LAYOUT] Blank space / off-side rule tokens */
+#define TOKEN_NEWLINE 61
+#define TOKEN_INDENT 62
+#define TOKEN_DEDENT 63
+#define TOKEN_ERROR 64
+#define MAX_INDENT_DEPTH 100
+/* [DELIM] Brace tokens for the mapped collection (dictionaries and sets) */
+#define LEFT_BRACE 65  /* { */
+#define RIGHT_BRACE 66 /* } */
 /******************************************************/
 /* main driver */
 int main()
@@ -230,12 +243,12 @@ int lookup(char ch)
         break;
     case '{': /* [DELIM] */
         addChar();
-        pushBracket ('{');
+        pushBracket('{');
         nextToken = LEFT_BRACE;
         break;
     case '}': /* [DELIM] */
         addChar();
-        popBracket ('}');
+        popBracket('}');
         nextToken = RIGHT_BRACE;
         break;
     case '"': 
@@ -274,11 +287,10 @@ void addChar()
     else
         printf("Error - lexeme is too long \n");
 }
-
 /*****************************************************/
 /* pushBracket - remember an opening bracket ( [ { on the stack,
-   along with where the line is found on */
-void pushBracket(char open) 
+   along with the line it is found on */
+void pushBracket(char open)
 {
     if (bracketTop < MAX_BRACKET_DEPTH)
     {
@@ -290,36 +302,37 @@ void pushBracket(char open)
         printf("Error - brackets nested too deeply \n");
 }
 /*****************************************************/
-/* popBracket - check that a closing bracket ) ] } matches the 
-   most recent open bracket. And reports an error if there is 
-   none or if its the wrong kind */
+/* popBracket - check that a closing bracket ) ] } matches the
+   most recent open bracket. Reports an error if there is
+   none or if it is the wrong kind */
 void popBracket(char close)
 {
     char open;
 
     if (bracketTop == 0)
     {
-        printf("Error - '%c' on line %d has no matching opening bracket \n", 
-              close, lineNo);
-        return ;
+        printf("Error - '%c' on line %d has no matching opening bracket \n",
+               close, lineNo);
+        return;
     }
     bracketTop--;
     open = bracketStack[bracketTop];
-    if((open == '(' && close != ')') ||
-       (open == '[' && close != ']') ||
-       (open == '{' && close != '}'))
-        printf("Error - '%c' on line %d does not match '%c' from line %d \n", 
-              close, lineNo, open, bracketLine[bracketTop]);
+    if ((open == '(' && close != ')') ||
+        (open == '[' && close != ']') ||
+        (open == '{' && close != '}'))
+        printf("Error - '%c' on line %d does not match '%c' from line %d \n",
+               close, lineNo, open, bracketLine[bracketTop]);
 }
 /*****************************************************/
-/* checkUnclosed - called at the end of input; any opening 
+/* checkUnclosed - called at the end of input; any opening
    bracket still on the stack was never closed */
 void checkUnclosed()
 {
     while (bracketTop > 0)
     {
         bracketTop--;
-        printf("Error - '%c' from line %d is never closed \n", bracketStack[bracketTop], bracketLine[bracketTop]);
+        printf("Error - '%c' from line %d is never closed \n",
+               bracketStack[bracketTop], bracketLine[bracketTop]);
     }
 }
 /*****************************************************/
@@ -329,6 +342,8 @@ void getChar()
 {
     if ((nextChar = getc(in_fp)) != EOF)
     {
+        if (nextChar == '\n')
+            lineNo++; /* keeps bracket error messages on the right line */
         if (isalpha(nextChar))
             charClass = LETTER;
         else if (isdigit(nextChar))
@@ -369,12 +384,188 @@ void getNonBlank() {
 }
 
 /*****************************************************/
-/* lex - a simple lexical analyzer for arithmetic
- expressions */
+/* lex - a lexical analyzer for Tagpy: tokens plus the
+ NEWLINE / INDENT / DEDENT layout tokens */
 int lex()
 {
     lexLen = 0;
-    getNonBlank();
+    lexeme[0] = '\0';
+
+    if (pending_dedents > 0)
+    {
+        pending_dedents--;
+        nextToken = TOKEN_DEDENT;
+        snprintf(lexeme, sizeof lexeme, "DEDENT");
+        printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+        return nextToken;
+    }
+
+    for (;;)
+    {
+        if (is_at_line_start)
+        {
+            int space_count = 0;
+
+            while (nextChar == ' ' || nextChar == '\t')
+            {
+                space_count += (nextChar == '\t') ? 4 : 1;
+                getChar();
+            }
+
+            /* Ignore blank lines and comment-only lines. */
+            if (nextChar == '\n' || (nextChar == '\r' && peekChar() == '\n'))
+            {
+                getChar();
+                if (nextChar == '\n')
+                    getChar();
+                continue;
+            }
+
+            if (nextChar == '#')
+            {
+                if (peekChar() == '#')
+                {
+                    getChar();
+                    getChar();
+                    while (charClass != EOF)
+                    {
+                        if (nextChar == '#' && peekChar() == '#')
+                        {
+                            getChar();
+                            getChar();
+                            break;
+                        }
+                        if (nextChar == '\n')
+                        {
+                            is_at_line_start = 1;
+                            line_has_token = 0;
+                        }
+                        getChar();
+                    }
+                    if (is_at_line_start)
+                        continue;
+                }
+                else
+                {
+                    while (charClass != EOF && nextChar != '\n')
+                        getChar();
+                    if (nextChar == '\n')
+                        getChar();
+                    continue;
+                }
+            }
+
+            if (charClass == EOF)
+            {
+                if (indent_top > 0)
+                {
+                    pending_dedents = indent_top - 1;
+                    indent_top = 0;
+                    nextToken = TOKEN_DEDENT;
+                    snprintf(lexeme, sizeof lexeme, "DEDENT");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                nextToken = EOF;
+                strcpy(lexeme, "EOF");
+                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                return nextToken;
+            }
+
+            is_at_line_start = 0;
+            if (space_count > indent_stack[indent_top])
+            {
+                if (indent_top >= MAX_INDENT_DEPTH - 1)
+                {
+                    printf("Error: Indentation too deep.\n");
+                    nextToken = TOKEN_ERROR;
+                    strcpy(lexeme, "ERROR");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                indent_stack[++indent_top] = space_count;
+                nextToken = TOKEN_INDENT;
+                strcpy(lexeme, "INDENT");
+                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                return nextToken;
+            }
+            if (space_count < indent_stack[indent_top])
+            {
+                while (indent_top > 0 && space_count < indent_stack[indent_top])
+                {
+                    indent_top--;
+                    pending_dedents++;
+                }
+                if (space_count != indent_stack[indent_top])
+                {
+                    printf("Error: Unindent does not match any outer indentation level.\n");
+                    nextToken = TOKEN_ERROR;
+                    strcpy(lexeme, "ERROR");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                pending_dedents--;
+                nextToken = TOKEN_DEDENT;
+                strcpy(lexeme, "DEDENT");
+                printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                return nextToken;
+            }
+        }
+
+        if (nextChar == '#')
+        {
+            if (peekChar() == '#')
+            {
+                getChar();
+                getChar();
+                while (charClass != EOF)
+                {
+                    if (nextChar == '#' && peekChar() == '#')
+                    {
+                        getChar();
+                        getChar();
+                        break;
+                    }
+                    if (nextChar == '\n' && bracketTop == 0)
+                    {
+                        is_at_line_start = 1;
+                        line_has_token = 0;
+                    }
+                    getChar();
+                }
+                continue;
+            }
+            while (charClass != EOF && nextChar != '\n')
+                getChar();
+            continue;
+        }
+
+        if (isspace((unsigned char)nextChar))
+        {
+            if (nextChar == '\n')
+            {
+                getChar();
+                /* a newline inside ( ) [ ] { } does not end the statement and
+                   the next line's indentation is not measured */
+                if (bracketTop > 0)
+                    continue;
+                is_at_line_start = 1;
+                if (line_has_token)
+                {
+                    line_has_token = 0;
+                    nextToken = TOKEN_NEWLINE;
+                    strcpy(lexeme, "NEWLINE");
+                    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+                    return nextToken;
+                }
+                continue;
+            }
+            getChar();
+            continue;
+        }
+        break;
+    }
+
     switch (charClass)
     {
         /* Parse identifiers  -> use this for keywords, noise words, etc.*/
@@ -411,13 +602,30 @@ int lex()
         break;
         /* EOF */
     case EOF:
+        /* the file ended without a final newline: close the last statement */
+        if (line_has_token)
+        {
+            line_has_token = 0;
+            nextToken = TOKEN_NEWLINE;
+            strcpy(lexeme, "NEWLINE");
+            printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+            return nextToken;
+        }
+        if (indent_top > 0)
+        {
+            pending_dedents = indent_top - 1;
+            indent_top = 0;
+            nextToken = TOKEN_DEDENT;
+            strcpy(lexeme, "DEDENT");
+            printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+            return nextToken;
+        }
         nextToken = EOF;
-        lexeme[0] = 'E';
-        lexeme[1] = 'O';
-        lexeme[2] = 'F';
-        lexeme[3] = 0;
+        strcpy(lexeme, "EOF");
         break;
     } /* End of switch */
+    if (nextToken != EOF)
+        line_has_token = 1;
     printf("Next token is: %d, Next lexeme is %s\n",
            nextToken, lexeme);
     return nextToken;
