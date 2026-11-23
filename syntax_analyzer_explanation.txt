@@ -1,0 +1,885 @@
+==============================================================================
+ TAGPY SYNTAX ANALYZER - EXPLANATION OF THE ADDED CODE
+ COSC 303 - Principles of Programming Languages
+==============================================================================
+
+CONTENTS
+  1. What was added
+  2. How to compile and run
+  3. The one change made to front.c (the lexical analyzer)
+  4. Syntax Analyzer checklist - where each item is in the code
+  5. How the program works
+  6. EBNF rule -> C function (Sebesta's method)
+  7. Rules that had to be left-factored
+  8. Error recovery (panic mode)
+  9. Error messages
+ 10. Transition diagrams
+ 11. Parsing table (the table of the grammar)
+ 12. The output file "Parsing Table.txt"
+ 13. Test files and sample output
+ 14. Notes and limits
+
+
+==============================================================================
+ 1. WHAT WAS ADDED
+==============================================================================
+
+  syntax_analyzer.c               The syntax analyzer (parser). A separate C file.
+  syntax_analyzer_explanation.txt This file.
+  run.sh / run.bat                ONE command that compiles and runs everything
+                                  (section 2).
+  syntax_test.tagpy               A correct Tagpy program that uses every statement.
+  syntax_error_test.tagpy         A Tagpy program with 11 deliberate syntax errors.
+  front.c                         The lexer, with ONE addition: the keyword "habang"
+                                  (see section 3).
+  README.md                       Updated to describe the syntax analyzer.
+
+The syntax analyzer is the next phase after the lexical analyzer. The two
+programs are separate and connected only by the file "Symbol Table.txt":
+
+   sample.tagpy --> [ front.c ] --> Symbol Table.txt --> [ syntax_analyzer.c ]
+   (source code)    lexical          (one token per        syntax analysis
+                    analyzer          row)                      |
+                                                                v
+                                                        Parsing Table.txt
+                                                        (the parsing table,
+                                                         as a text file)
+
+The parser is based on the recursive-descent parser of Sebesta, "Concepts of
+Programming Languages" (the expr(), term(), factor() and ifstmt() functions).
+It is written from the group's EBNF grammar for Tagpy.
+
+
+==============================================================================
+ 2. HOW TO COMPILE AND RUN
+==============================================================================
+
+ONE COMMAND (compiles both programs, runs the lexer, then the parser):
+
+  Windows:        run.bat syntax_test.tagpy
+  Linux / macOS:  sh run.sh syntax_test.tagpy       (or: chmod +x run.sh; ./run.sh ...)
+
+  - With no file name it uses sample.tagpy.
+  - Add the word  trace  after the file name to also see the full Enter/Exit
+    parse trace on the screen:   run.bat syntax_test.tagpy trace
+  - Run it from the folder that contains front.c and syntax_analyzer.c.
+  - It stops if a program does not compile or the lexer rejects the file.
+  - It writes "Symbol Table.txt" and "Parsing Table.txt" in that folder.
+  - Its exit code is 0 when there are no syntax errors and 2 when there are.
+
+STEP BY STEP (what the script does):
+
+  gcc front.c -o front
+  gcc syntax_analyzer.c -o syntax_analyzer
+
+  ./front syntax_test.tagpy        # step 1: lexer writes "Symbol Table.txt"
+  ./syntax_analyzer                # step 2: parser reads "Symbol Table.txt"
+                                   #         and writes "Parsing Table.txt"
+
+  ./syntax_analyzer -q             # quiet: print only errors and the summary
+  ./syntax_analyzer other.txt      # read a different symbol table file
+
+On Windows (MinGW) use front.exe and syntax_analyzer.exe.
+
+Every run writes the parsing table to "Parsing Table.txt" (section 12).
+By default the parser also prints a trace in the style of Sebesta's book: every
+token it receives ("Next token is: ... Next lexeme is ...") and "Enter <rule>"
+/ "Exit <rule>" for every grammar rule, indented by nesting level. At the end
+it prints the number of syntax errors found. The exit code is 0 when the
+program is correct and 2 when there are syntax errors.
+
+IMPORTANT: keep SHOW_LAYOUT_IN_TABLE set to 1 in front.c. The parser needs
+the NEWLINE, INDENT and DEDENT rows, because the grammar uses them
+(statement ::= simple_stmt NEWLINE, block ::= COLON NEWLINE INDENT ... DEDENT).
+
+
+==============================================================================
+ 3. THE ONE CHANGE MADE TO front.c
+==============================================================================
+
+The EBNF grammar has   while_stmt ::= "habang" expression block
+but the lexical analyzer did not know the word "habang": it was written to
+the Symbol Table as an IDENTIFIER, so no while loop could ever be parsed.
+
+Added to front.c (everything else is unchanged):
+
+  * #define KW_HABANG 75
+  * tokenName(): case KW_HABANG -> "KW_HABANG"
+  * keyword_lookup() DFA: "hindi" and "habang" both start with "h", so state 7
+    now branches:  'i' -> state 8 (hindi)   'a' -> state 83 (habang)
+    new states 83 (ha) -> 84 (hab) -> 85 (haba) -> 86 (haban) -> 87 (habang)
+  * final state 87 returns KW_HABANG.
+
+Any other word that starts with "ha" (for example "habangx") is still an
+IDENTIFIER, and "hindi" still works.
+
+
+==============================================================================
+ 4. SYNTAX ANALYZER CHECKLIST - WHERE EACH ITEM IS IN THE CODE
+==============================================================================
+
+ #  Criteria                          Where / how (syntax_analyzer.c)
+--  --------------------------------  ----------------------------------------
+ 1  Input read one by one from the    lex() calls readRow(), which reads exactly
+    symbol table (one token at a      ONE row of "Symbol Table.txt" (TOKEN TYPE
+    time)                             column + LEXEME column) each time it is
+                                      called. The parser only ever sees the
+                                      current token, nextToken.
+ 2  Parser algorithm: Recursive       One C function per EBNF rule (section 6),
+    Descent Parsing                   driven by lex() and nextToken like
+                                      Sebesta's front.c. main() calls lex()
+                                      once, then program().
+ 3  Transition diagram                Section 10 of this file.
+ 4  Parsing table                     Section 11 (the table of the grammar) and
+                                      the file "Parsing Table.txt" that every run
+                                      writes (section 12). Also summarized in the
+                                      comment at the top of the .c file.
+ 5  Input statement                   input_stmt()  (reached from
+                                      declaration_stmt(), see section 7)
+ 6  Output statement                  output_stmt()   sulat(...) and sulatln(...)
+ 7  Assignment statement              assignment_stmt()  (via identifier_stmt())
+ 8  Condition statement               conditional_stmt(), if_clause(),
+                                      elif_clause(), else_clause(), block()
+                                      kung / kundikung / kundi
+ 9  Iterative statement               iterative_stmt(), for_stmt() (bawat ... sa),
+                                      while_stmt() (habang)
+10  Declaration statement             declaration_stmt(), type()
+11  Error recovery                    METHOD USED: PANIC MODE (section 8):
+                                      error() -> longjmp -> guarded() ->
+                                      synchronize()
+12  Error messages                    error() and errorMsg() (section 9)
+
+Other statements in the grammar are also parsed: return_stmt(), call_stmt(),
+function_def() (itukoy), match_stmt() (suri / sakali), and all expressions
+(logical, relational, arithmetic, collections).
+
+
+==============================================================================
+ 5. HOW THE PROGRAM WORKS
+==============================================================================
+
+5.1 Global variables
+  nextToken   code of the lookahead token (EOF when the table is finished).
+              The codes and names are the same as in front.c.
+  lexeme      the text of that token.
+  tokenNo     how many tokens the parser has received so far.
+  codeLine    which line of CODE the parser is on (see section 9).
+  errorCount  number of syntax errors found.
+  trace       1 = print the Enter/Exit trace, 0 = quiet (-q).
+  handler     where error() jumps to: the closest guarded() call.
+
+5.2 tokenTable[]
+  A table of {name, code}. front.c writes token NAMES (for example
+  "GREATER_EQUAL") in the Symbol Table; the parser turns each name back into
+  the numeric code (for example GE_OP) with codeOf(). A name that front.c never
+  writes becomes TOKEN_ERROR (INVALID). Names are compared one character at a
+  time by sameText() - no string library functions, like the lexer.
+
+5.3 readRow() and lex()
+  The Symbol Table has two header rows and then one row per token:
+      TOKEN TYPE              LEXEME
+      ----------              ------
+      IDENTIFIER              a
+  The TOKEN TYPE is written with width 24 (%-24s), so the lexeme starts in
+  column 25. openSymbolTable() checks and skips the two header rows.
+  readRow() reads one row and sets nextToken and lexeme. lex() calls it and:
+    - skips LINE_COMMENT, BLOCK_COMMENT and NOISE_WORD rows, because the grammar
+      says comments and noise words are "discarded before parsing";
+    - counts the token (tokenNo) and, in trace mode, prints
+      "Next token is: <name> Next lexeme is <lexeme>";
+    - sets nextToken to EOF at the end of the file.
+
+5.4 Main program
+      lex();       /* read the first token                      */
+      program();   /* program ::= { statement }                 */
+  then print the summary.
+
+5.5 Expressions follow the grammar's precedence
+  Lowest to highest:  o (OR)  <  at (AND)  <  hindi (NOT)  <  relational
+  <  + -  <  * / % //  <  unary + -  <  ** (right-associative)  <  primary.
+  Each level is a function that calls the next higher level, exactly as
+  Sebesta's expr() calls term() and term() calls factor(). The { } of EBNF
+  become while loops, so + - * / % // and at / o are left-associative.
+  Sebesta's expr() is arithmetic_expression() here.
+
+
+==============================================================================
+ 6. EBNF RULE -> C FUNCTION (SEBESTA'S METHOD)
+==============================================================================
+
+  EBNF                      C code
+  ------------------------  ---------------------------------------------
+  non-terminal              a function
+  terminal token            if (nextToken == X) lex(); else error(...);
+                            (the helper expect(X, "what was expected"))
+  { ... }  repetition       while (nextToken is the first token) { ... }
+  [ ... ]  optional         if (nextToken is the first token) { ... }
+  a | b    choice           switch / if-else on nextToken
+
+Function list (all in syntax_analyzer.c):
+
+  Program structure   program, statement, simple_stmt, compound_stmt, block
+  Simple statements   declaration_stmt, input_stmt, identifier_stmt,
+                      assignment_stmt, call_stmt, output_stmt, return_stmt, type
+  Conditional         conditional_stmt, if_clause, elif_clause, else_clause
+  Iterative           iterative_stmt, for_stmt, while_stmt
+  Functions           function_def, parameter_list, parameter
+  Match               match_stmt, case_block, case_clause, pattern
+  Expressions         expression, logical_expression, boolean_or_expr,
+                      boolean_and_expr, boolean_not_expr, relational_expression,
+                      arithmetic_expression, term, factor, power,
+                      primary_expression, primary_atom, function_call_rest,
+                      expression_list
+  Collections         collection_literal, list_literal, dict_or_set_literal,
+                      key_value_pair
+
+Sebesta's ifstmt() is the model for conditional_stmt(): check the keyword,
+parse the Boolean expression, parse the clause, then "if an else is next,
+parse the else clause". In Tagpy the clauses are kung / kundikung / kundi and
+each clause body is a block (COLON NEWLINE INDENT statements DEDENT) instead
+of parentheses.
+
+Rules that the parser does not need as separate functions:
+  * letter, number, space, symbol, escape_seq, comment_char, IDENTIFIER,
+    INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL, operator tokens, keyword
+    tokens - these are the lexer's job; the parser receives them as tokens.
+  * string_expression - it is never used by another rule. A string
+    concatenation such as "a" + name is already accepted by
+    arithmetic_expression (STRING_LITERAL and IDENTIFIER are primary atoms and
+    ADD is an arithmetic operator).
+  * value, operation, operator, data_type (assignment section) - older helper
+    rules that are replaced by expression and type.
+
+
+==============================================================================
+ 7. RULES THAT HAD TO BE LEFT-FACTORED
+==============================================================================
+
+A recursive-descent parser with one token of lookahead cannot choose between
+two rules that begin with the same tokens. The grammar was not changed; the
+common beginning is parsed first and the NEXT token chooses the rule:
+
+  declaration_stmt ::= type IDENTIFIER [ ASSIGN expression ]
+  input_stmt       ::= type IDENTIFIER ASSIGN RW_KUNIN LPAREN [expression] RPAREN
+      -> declaration_stmt() parses "type IDENTIFIER". If ASSIGN follows and the
+         next token is RW_KUNIN it calls input_stmt() (which parses
+         RW_KUNIN LPAREN [expression] RPAREN); otherwise it parses the
+         expression of the declaration.
+
+  assignment_stmt ::= IDENTIFIER ASSIGN expression
+  call_stmt       ::= IDENTIFIER LPAREN [ expression_list ] RPAREN
+      -> identifier_stmt() parses IDENTIFIER. ASSIGN -> assignment_stmt();
+         LPAREN -> call_stmt(); anything else is an error.
+
+  primary_atom: function_call and IDENTIFIER both begin with IDENTIFIER
+      -> after the IDENTIFIER, LPAREN means function call.
+
+  dict_literal ::= LBRACE [ key_value_pair { COMMA key_value_pair } ] RBRACE
+  set_literal  ::= LBRACE expression_list RBRACE
+      -> dict_or_set_literal(): "{}" is an empty dictionary; otherwise it
+         parses the first expression - a COLON after it means dictionary,
+         no COLON means set (this is the grammar's own note).
+
+  parameter ::= [ type ] IDENTIFIER   -> the next token is a type or IDENTIFIER.
+  return_stmt ::= KW_IBALIK [expression] -> an expression is parsed only if the
+         next token can start one (startsExpression()).
+
+
+==============================================================================
+ 8. ERROR RECOVERY (PANIC MODE)
+==============================================================================
+
+METHOD USED: PANIC MODE RECOVERY.
+
+When the parser finds a token that does not fit the grammar it must not stop,
+and it must not report a long chain of false errors. Steps:
+
+  1. error() prints one message and counts it (errorCount++).
+  2. error() does a longjmp back to the closest guarded() call. guarded() wraps
+     every statement (in program() and in every block()) and every case_clause().
+     So the rule that failed is abandoned and recovery happens at the
+     statement that contained the error.
+  3. synchronize() discards tokens until a SYNCHRONIZING TOKEN:
+        NEWLINE  - the end of the bad line (it is consumed)
+        DEDENT   - the end of the enclosing block (left for block() to use)
+        EOF      - the end of the input
+  4. If the bad line owned an indented block (for example "kung x" with a
+     missing colon, followed by an indented body), skipBlock() throws the whole
+     block away, counting nested INDENT/DEDENT, so its lines are not reported
+     as errors too. An unexpected INDENT also causes the whole block to be
+     skipped.
+  5. Parsing continues with the next statement. A statement that fails inside
+     a block is recovered inside that block, so the rest of the block and the
+     DEDENT are still matched.
+
+Because the parser always makes progress (it either consumes the bad tokens or
+stops at a DEDENT/EOF that the caller handles), it cannot loop forever.
+
+Example (syntax_error_test.tagpy line 4-5):
+      kung a > 1            <- ':' is missing
+          sulat("x")
+  Message: expected ':' to start the block, but found the end of the line
+  Recovery: skip to NEWLINE, then skip the indented block "sulat("x")".
+  The next statement is parsed normally.
+
+
+==============================================================================
+ 9. ERROR MESSAGES
+==============================================================================
+
+Format:
+  Syntax error (code line L, token #N): expected <what>, but found <what was there>
+
+  - "expected" says what the grammar needed here, in Tagpy terms, for example
+    "':' to start the block", "'sa' after the loop variable",
+    "an expression (...)", "a data type (num, tul, baka, kar, pisi or lista)".
+  - "found" shows the token type and its lexeme, for example
+    IDENTIFIER 'nums', INT_LITERAL '4', or plain words for layout tokens:
+    "the end of the line", "the end of the file", "an unexpected indentation",
+    "the end of an indented block".
+  - A token that the lexer already marked INVALID is reported as
+    "an invalid token '...' (rejected by the lexical analyzer)".
+  - Some mistakes have their own message, for example
+    "'kundi' has no matching 'kung' before it",
+    "'sakali' can only be used inside a 'suri' block",
+    "unexpected indentation".
+
+"code line" is the number of the line of CODE the parser is on. The Symbol
+Table has no line numbers, so the parser counts NEWLINE tokens. Blank lines and
+comment-only lines do not produce a NEWLINE token, so they are not counted, and
+a statement written over several lines inside ( ) [ ] { } counts as one line.
+"token #N" is the position of the token in the Symbol Table (comments and
+noise words are not counted) and always points exactly at the bad token.
+
+Error messages go to the screen (standard output), in order with the trace.
+
+
+==============================================================================
+ 10. TRANSITION DIAGRAMS
+==============================================================================
+
+How to read them:
+  (n)    a state          ((n))  an accepting state (the rule is complete)
+  UPPERCASE      a token read with lex()  (the lookahead must be that token)
+  <lowercase>    a call to the function for that non-terminal
+  A loop that leaves a state and comes back to the same state is an EBNF { }.
+  The text beside an edge is the lookahead token that selects it.
+
+------------------------------------------------------------------------------
+ program ::= { statement }
+------------------------------------------------------------------------------
+            <statement>
+           +-----------+
+           |           |
+           v           |
+  --->   ((0)) --------+            (stops when nextToken is EOF)
+
+------------------------------------------------------------------------------
+ statement ::= simple_stmt NEWLINE | compound_stmt
+------------------------------------------------------------------------------
+                  <compound_stmt>
+                  (KW_KUNG KW_BAWAT KW_HABANG KW_ITUKOY KW_SURI)
+          +---------------------------------------+
+          |                                       v
+  ---> (0)                                      ((2))
+          |                                       ^
+          |   <simple_stmt>                       |   NEWLINE
+          +------------------------> (1) ---------+
+
+------------------------------------------------------------------------------
+ simple_stmt ::= declaration_stmt | assignment_stmt | input_stmt |
+                 output_stmt | return_stmt | call_stmt
+------------------------------------------------------------------------------
+          RW_NUM RW_TUL RW_BAKA RW_KAR RW_PISI RW_LISTA
+          +--------- <declaration_stmt> (includes input_stmt) ------+
+          |   IDENTIFIER                                           |
+          +--------- <identifier_stmt> (assignment or call) -------+
+  ---> (0)|   RW_SULAT  RW_SULATLN                                 v
+          +--------- <output_stmt> -------------------------->  ((1))
+          |   KW_IBALIK                                            ^
+          +--------- <return_stmt> --------------------------------+
+
+------------------------------------------------------------------------------
+ block ::= COLON NEWLINE INDENT statement { statement } DEDENT
+------------------------------------------------------------------------------
+          COLON        NEWLINE        INDENT        <statement>
+  ---> (0) ----> (1) ---------> (2) ---------> (3) -----------> (4)
+                                                                 | |
+                                         +---- <statement> -----+ |
+                                         |  (not DEDENT/EOF)       |
+                                         +-------------------------+
+                                                                   | DEDENT
+                                                                   v
+                                                                 ((5))
+
+------------------------------------------------------------------------------
+ declaration_stmt ::= type IDENTIFIER [ ASSIGN expression ]
+ input_stmt       ::= type IDENTIFIER ASSIGN RW_KUNIN LPAREN [expression] RPAREN
+------------------------------------------------------------------------------
+          <type>        IDENTIFIER            ASSIGN
+  ---> (0) ----> (1) -------------> ((2)) ----------> (3)
+                                      ^                 |
+                                      |                 +--- <expression> -----> ((4))
+              a plain declaration     |                 |    (declaration with a value)
+              "type IDENTIFIER"       |                 |
+              is already complete ----+                 +--- RW_KUNIN ---> (5)
+                                                                           |
+                                                                           | LPAREN
+                                                                           v
+                                                        +---------------- (6)
+                                                        |                  |
+                                                        | RPAREN           | <expression>
+                                                        |                  v
+                                                        |                 (7)
+                                                        |                  |
+                                                        |                  | RPAREN
+                                                        v                  |
+                                                      ((8)) <--------------+
+                                                 (input_stmt complete)
+
+  Summary of the edges after state (3):
+      <expression>            -> ((4))   declaration with an initial value
+      RW_KUNIN LPAREN [<expression>] RPAREN -> ((8))   input_stmt (kunin)
+
+------------------------------------------------------------------------------
+ assignment_stmt ::= IDENTIFIER ASSIGN expression
+ call_stmt       ::= IDENTIFIER LPAREN [ expression_list ] RPAREN
+------------------------------------------------------------------------------
+                                ASSIGN         <expression>
+                    +-------> (1) ------> (2) ------------> ((3))   assignment
+          IDENTIFIER |
+  ---> (0) ---------+
+                    | LPAREN          <expression_list>        RPAREN
+                    +-------> (4) -------------------> (5) ---------> ((6))  call
+                              |                                          ^
+                              +------------ RPAREN (no arguments) ------+
+
+------------------------------------------------------------------------------
+ output_stmt ::= RW_SULAT LPAREN expression RPAREN
+               | RW_SULATLN LPAREN expression RPAREN
+------------------------------------------------------------------------------
+          RW_SULAT or        LPAREN       <expression>      RPAREN
+          RW_SULATLN
+  ---> (0) -----------> (1) ---------> (2) -----------> (3) ---------> ((4))
+
+------------------------------------------------------------------------------
+ return_stmt ::= KW_IBALIK [ expression ]
+------------------------------------------------------------------------------
+          KW_IBALIK                  <expression>
+  ---> (0) ---------> ((1)) ------------------------> ((2))
+                                (only if the next token can start an expression)
+
+------------------------------------------------------------------------------
+ conditional_stmt ::= if_clause { elif_clause } [ else_clause ]
+ if_clause   ::= "kung" expression block
+ elif_clause ::= "kundikung" expression block
+ else_clause ::= "kundi" block
+------------------------------------------------------------------------------
+        KW_KUNG   <expression>   <block>
+  ---> (0) ---> (1) -------> (2) ------> ((3)) <---+
+                                           |  |     |
+                      KW_KUNDIKUNG         |  +-----+  KW_KUNDIKUNG <expression> <block>
+                                           |
+                                           | KW_KUNDI           <block>
+                                           +---------> (4) ------------> ((5))
+
+------------------------------------------------------------------------------
+ iterative_stmt ::= for_stmt | while_stmt
+ for_stmt   ::= "bawat" IDENTIFIER "sa" expression block
+ while_stmt ::= "habang" expression block
+------------------------------------------------------------------------------
+  for_stmt:
+        KW_BAWAT   IDENTIFIER    KW_SA    <expression>    <block>
+  ---> (0) ----> (1) -------> (2) ----> (3) ---------> (4) ------> ((5))
+
+  while_stmt:
+        KW_HABANG   <expression>    <block>
+  ---> (0) -----> (1) ---------> (2) -------> ((3))
+
+------------------------------------------------------------------------------
+ function_def ::= KW_ITUKOY IDENTIFIER LPAREN [ parameter_list ] RPAREN block
+ parameter_list ::= parameter { COMMA parameter }
+ parameter ::= [ type ] IDENTIFIER
+------------------------------------------------------------------------------
+  function_def:
+       KW_ITUKOY  IDENTIFIER   LPAREN     <parameter_list>    RPAREN   <block>
+  --> (0) ---> (1) ------> (2) ------> (3) -----------> (4) -------> (5) -------> ((6))
+                                         |                ^
+                                         +---- RPAREN ----+   (no parameters)
+
+  parameter_list:                COMMA
+                              +--------+
+                  <parameter> |        |  <parameter>
+  ---> (0) ---------------> ((1)) -----+---------------> back to ((1))
+
+  parameter:
+           <type> (optional)    IDENTIFIER
+  ---> (0) ---------------> (1) ----------> ((2))
+        |                    ^
+        +-- IDENTIFIER only -+
+
+------------------------------------------------------------------------------
+ match_stmt ::= KW_SURI expression case_block
+ case_block ::= COLON NEWLINE INDENT case_clause { case_clause } DEDENT
+ case_clause ::= KW_SAKALI pattern block
+------------------------------------------------------------------------------
+  match_stmt:
+         KW_SURI    <expression>    <case_block>
+  ---> (0) ----> (1) -----------> (2) ------------> ((3))
+
+  case_block:
+        COLON     NEWLINE     INDENT      <case_clause>         DEDENT
+  --> (0) --> (1) ------> (2) ------> (3) -----------> ((4)) -----------> ((5))
+                                                         |  ^
+                                                         +--+  <case_clause> (KW_SAKALI)
+
+  case_clause:
+        KW_SAKALI    <pattern>     <block>
+  --> (0) ------> (1) -------> (2) -------> ((3))
+        pattern = INT_LITERAL | FLOAT_LITERAL | STRING_LITERAL |
+                  TRUE_LITERAL | FALSE_LITERAL | IDENTIFIER
+
+------------------------------------------------------------------------------
+ Expressions (each level calls the next one, like Sebesta's expr/term/factor)
+------------------------------------------------------------------------------
+  expression -> logical_expression -> boolean_or_expr   (calls only)
+
+  boolean_or_expr ::= boolean_and_expr { OR boolean_and_expr }
+                         OR (o)
+                     +-----------+
+                     |           |   <boolean_and_expr>
+                     v           |
+  --> (0) ---------> ((1)) ------+       [ (0)->(1) is <boolean_and_expr> ]
+
+  boolean_and_expr ::= boolean_not_expr { AND boolean_not_expr }
+        same shape, loop token AND (at), calls <boolean_not_expr>
+
+  boolean_not_expr ::= NOT boolean_not_expr | relational_expression
+           HINDI (NOT)       <boolean_not_expr>
+  --> (0) ---------------> (1) -----------------> ((3))
+        |                                           ^
+        +----- <relational_expression> -------------+
+
+  relational_expression ::= arithmetic_expression [ rel_op arithmetic_expression ]
+        <arithmetic_expression>      rel_op                <arithmetic_expression>
+  --> (0) ---------------------> ((1)) ----------------> (2) ---------------> ((3))
+        rel_op = EQUAL | NOT_EQUAL | LESS_THAN | GREATER_THAN |
+                 LESS_EQUAL | GREATER_EQUAL          (used at most once)
+
+  arithmetic_expression ::= term { ( ADD | SUBTRACT ) term }
+        <term>                          ADD or SUBTRACT
+  --> (0) ------> ((1)) ----------------------------> (2)
+                    ^                                    |
+                    +------------- <term> --------------+
+
+  term ::= factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+        <factor>                  MULTIPLY DIVIDE MODULO FLOOR_DIVIDE
+  --> (0) ------> ((1)) ----------------------------------------> (2)
+                    ^                                                |
+                    +----------------- <factor> --------------------+
+
+  factor ::= [ ADD | SUBTRACT ] power
+           ADD or SUBTRACT      <power>
+  --> (0) -----------------> (1) --------> ((2))
+        |                     ^
+        +----- (no sign) -----+
+
+  power ::= primary_expression [ EXPONENT power ]        (right-associative)
+        <primary_expression>      EXPONENT       <power>
+  --> (0) ----------------> ((1)) ---------> (2) --------> ((3))
+
+  primary_expression ::= primary_atom { LBRACKET expression RBRACKET }
+        <primary_atom>                LBRACKET      <expression>     RBRACKET
+  --> (0) ---------> ((1)) ----------------> (2) ------------> (3) ---------+
+                       ^                                                     |
+                       +-----------------------------------------------------+
+
+  primary_atom ::= INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL |
+                   STRING_LITERAL | collection_literal | function_call |
+                   IDENTIFIER | LPAREN expression RPAREN
+        INT_LITERAL FLOAT_LITERAL TRUE_LITERAL FALSE_LITERAL STRING_LITERAL
+        +----------------------------------------------------------> ((1))
+        | LBRACKET or LBRACE                                           ^
+        +------------------- <collection_literal> --------------------+
+  (0)---+ IDENTIFIER                                                   ^
+        +--------> (2) ----- (next is not LPAREN) --------------------+
+        |           | LPAREN                                           ^
+        |           +------- <function_call_rest> ---------------------+
+        | LPAREN       <expression>        RPAREN                      ^
+        +-------> (3) ---------------> (4) ----------------------------+
+
+  function_call_rest ::= LPAREN [ expression_list ] RPAREN   (after the name)
+  expression_list ::= expression { COMMA expression }
+
+------------------------------------------------------------------------------
+ Collections
+------------------------------------------------------------------------------
+  list_literal ::= LBRACKET [ expression_list ] RBRACKET
+        LBRACKET     <expression_list>     RBRACKET
+  --> (0) -------> (1) --------------> (2) -----------> ((3))
+                    |                                      ^
+                    +--------------- RBRACKET (empty list) +
+
+  dict_literal / set_literal  (left-factored: both start with LBRACE)
+        LBRACE      <expression>             COLON       <expression>
+  --> (0) ------> (1) ----------------> (2) -----------> (3) ----------+
+                   |  |                                     ^           |
+                   |  | RBRACE  ("{}" = empty dictionary)   +-----------+
+                   |  +------------------------------------+   COMMA <key_value_pair>
+                   |   (no COLON = SET: { COMMA <expression> })    |
+                   +-------------------------------------> (4) <---+
+                                                           | RBRACE
+                                                           v
+                                                         ((5))
+  key_value_pair ::= expression COLON expression
+
+
+==============================================================================
+ 11. PARSING TABLE
+==============================================================================
+
+Recursive descent has no stack table to fill in at run time; the "table" is the
+decision the parser makes from the LOOKAHEAD token nextToken. It is the
+predictive parsing table of the grammar, written as rows
+(non-terminal, lookahead token) -> action. "type" below means any of
+RW_NUM, RW_TUL, RW_BAKA, RW_KAR, RW_PISI, RW_LISTA.
+
+FIRST(expression) = { NOT, ADD, SUBTRACT, INT_LITERAL, FLOAT_LITERAL,
+                      TRUE_LITERAL, FALSE_LITERAL, STRING_LITERAL, LBRACKET,
+                      LBRACE, IDENTIFIER, LPAREN }
+FIRST(statement)  = { type, IDENTIFIER, RW_SULAT, RW_SULATLN, KW_IBALIK,
+                      KW_KUNG, KW_BAWAT, KW_HABANG, KW_ITUKOY, KW_SURI }
+
+ Non-terminal            Lookahead token(s)                  Action / production
+ ----------------------  ----------------------------------  ---------------------------
+ program                 FIRST(statement)                    statement, repeat
+                         EOF                                 stop (accept)
+                         DEDENT                              error (no block is open)
+ statement               KW_KUNG KW_BAWAT KW_HABANG          compound_stmt
+                         KW_ITUKOY KW_SURI
+                         type, IDENTIFIER, RW_SULAT,         simple_stmt NEWLINE
+                         RW_SULATLN, KW_IBALIK
+                         any other token                     error
+ simple_stmt             type                                declaration_stmt
+                         IDENTIFIER                          identifier_stmt
+                         RW_SULAT, RW_SULATLN                output_stmt
+                         KW_IBALIK                           return_stmt
+                         KW_KUNDIKUNG, KW_KUNDI,             error (own message)
+                         KW_SAKALI, KW_SA, INDENT
+                         any other token                     error
+ compound_stmt           KW_KUNG                             conditional_stmt
+                         KW_BAWAT, KW_HABANG                 iterative_stmt
+                         KW_ITUKOY                           function_def
+                         KW_SURI                             match_stmt
+ block                   COLON                               COLON NEWLINE INDENT
+                                                             statement { statement } DEDENT
+ declaration_stmt        type                                type IDENTIFIER ...
+   after IDENTIFIER      ASSIGN                              ASSIGN ( input_stmt | expression )
+                         any other token                     end (declaration without a value)
+   after ASSIGN          RW_KUNIN                            input_stmt
+                         FIRST(expression)                   expression
+ input_stmt              RW_KUNIN                            RW_KUNIN LPAREN [expression] RPAREN
+   inside the parens     FIRST(expression)                   expression
+                         RPAREN                              (empty)
+ identifier_stmt         (after IDENTIFIER) ASSIGN           assignment_stmt
+                         (after IDENTIFIER) LPAREN           call_stmt
+ output_stmt             RW_SULAT, RW_SULATLN                token LPAREN expression RPAREN
+ return_stmt             KW_IBALIK                           KW_IBALIK [expression]
+   after KW_IBALIK       FIRST(expression)                   expression
+                         NEWLINE                             (empty)
+ conditional_stmt        KW_KUNG                             if_clause
+   after if_clause       KW_KUNDIKUNG                        elif_clause, repeat
+                         KW_KUNDI                            else_clause
+                         any other token                     end
+ if_clause               KW_KUNG                             KW_KUNG expression block
+ elif_clause             KW_KUNDIKUNG                        KW_KUNDIKUNG expression block
+ else_clause             KW_KUNDI                            KW_KUNDI block
+ iterative_stmt          KW_BAWAT                            for_stmt
+                         KW_HABANG                           while_stmt
+ for_stmt                KW_BAWAT                            KW_BAWAT IDENTIFIER KW_SA
+                                                             expression block
+ while_stmt              KW_HABANG                           KW_HABANG expression block
+ function_def            KW_ITUKOY                           KW_ITUKOY IDENTIFIER LPAREN
+                                                             [parameter_list] RPAREN block
+   after LPAREN          type, IDENTIFIER                    parameter_list
+                         RPAREN                              (empty parameter list)
+ parameter_list          type, IDENTIFIER                    parameter { COMMA parameter }
+ parameter               type                                type IDENTIFIER
+                         IDENTIFIER                          IDENTIFIER
+ match_stmt              KW_SURI                             KW_SURI expression case_block
+ case_block              COLON                               COLON NEWLINE INDENT
+                                                             case_clause { case_clause } DEDENT
+   after a case_clause   KW_SAKALI                           case_clause, repeat
+                         DEDENT                              end of the case block
+ case_clause             KW_SAKALI                           KW_SAKALI pattern block
+ pattern                 INT_LITERAL FLOAT_LITERAL           the token itself
+                         STRING_LITERAL TRUE_LITERAL
+                         FALSE_LITERAL IDENTIFIER
+ expression              FIRST(expression)                   logical_expression
+ logical_expression      FIRST(expression)                   boolean_or_expr
+ boolean_or_expr         FIRST(expression)                   boolean_and_expr { OR boolean_and_expr }
+   after an operand      OR                                  OR boolean_and_expr, repeat
+ boolean_and_expr        FIRST(expression)                   boolean_not_expr { AND boolean_not_expr }
+   after an operand      AND                                 AND boolean_not_expr, repeat
+ boolean_not_expr        NOT                                 NOT boolean_not_expr
+                         ADD SUBTRACT INT_LITERAL ...        relational_expression
+                         (the rest of FIRST(expression))
+ relational_expression   FIRST(expression)                   arithmetic_expression
+                                                             [rel_op arithmetic_expression]
+   after the first operand  EQUAL NOT_EQUAL LESS_THAN        rel_op arithmetic_expression
+                         GREATER_THAN LESS_EQUAL
+                         GREATER_EQUAL
+ arithmetic_expression   FIRST(expression)                   term { (ADD|SUBTRACT) term }
+   after a term          ADD, SUBTRACT                       operator term, repeat
+ term                    FIRST(expression)                   factor { (MULTIPLY|DIVIDE|
+                                                             MODULO|FLOOR_DIVIDE) factor }
+   after a factor        MULTIPLY DIVIDE MODULO              operator factor, repeat
+                         FLOOR_DIVIDE
+ factor                  ADD, SUBTRACT                       sign power
+                         other FIRST(expression)             power
+ power                   FIRST(expression)                   primary_expression [EXPONENT power]
+   after the operand     EXPONENT                            EXPONENT power
+ primary_expression      FIRST(expression)                   primary_atom { [ expression ] }
+   after the atom        LBRACKET                            LBRACKET expression RBRACKET, repeat
+ primary_atom            INT_LITERAL FLOAT_LITERAL           the token itself
+                         TRUE_LITERAL FALSE_LITERAL
+                         STRING_LITERAL
+                         LBRACKET, LBRACE                    collection_literal
+                         IDENTIFIER                          IDENTIFIER, then if LPAREN:
+                                                             function_call_rest
+                         LPAREN                              LPAREN expression RPAREN
+                         any other token                     error
+ function_call_rest      LPAREN                              LPAREN [expression_list] RPAREN
+   after LPAREN          FIRST(expression)                   expression_list
+                         RPAREN                              (no arguments)
+ expression_list         FIRST(expression)                   expression { COMMA expression }
+ collection_literal      LBRACKET                            list_literal
+                         LBRACE                              dict_literal / set_literal
+ list_literal            LBRACKET                            LBRACKET [expression_list] RBRACKET
+   after LBRACKET        RBRACKET                            (empty list)
+ dict / set literal      LBRACE                              LBRACE ... RBRACE
+   after LBRACE          RBRACE                              {} (empty dictionary)
+                         FIRST(expression)                   expression, then:
+   after that expression COLON                               dictionary: COLON expression
+                                                             { COMMA key_value_pair }
+                         anything else                       set: { COMMA expression }
+ key_value_pair          FIRST(expression)                   expression COLON expression
+
+
+==============================================================================
+ 12. THE OUTPUT FILE "Parsing Table.txt"
+==============================================================================
+
+Every run of syntax_analyzer writes "Parsing Table.txt": the parsing table of
+THAT program, one row for each step the parser takes. (Section 11 is the table
+of the grammar itself; this file is the table of an actual run.)
+
+Columns:
+  STEP          row number
+  LINE          code line (see section 9)
+  NON-TERMINAL  the grammar rule being parsed
+  LOOKAHEAD     the token type at nextToken
+  LEXEME        the text of that token (first 20 characters)
+  ACTION        what the parser did, one of:
+      apply: <rule>              the rule is applied; its right-hand side is shown
+      select: <alternative>      the lookahead chose this alternative of the rule
+                                 (this is the (non-terminal, token) -> production
+                                 entry of the parsing table)
+      match: token consumed      the token was accepted and lex() read the next one
+      ERROR: <message>           a syntax error (same text as on the screen)
+      PANIC MODE: ...            error recovery starts
+      discard (panic mode)       a token thrown away by error recovery
+      ACCEPT / END OF INPUT      the last row
+
+At the end of the file a SUMMARY gives the tokens read, number of rows, number
+of syntax errors, the result, and the list of all syntax errors.
+
+Example - the program   num a = 5   (first rows of the real output):
+
+STEP   LINE  NON-TERMINAL      LOOKAHEAD    LEXEME   ACTION
+----   ----  ----------------  -----------  ------   ------
+1      1     program           RW_NUM       num      apply: { statement }
+2      1     statement         RW_NUM       num      apply: simple_stmt NEWLINE | compound_stmt
+3      1     statement         RW_NUM       num      select: simple_stmt NEWLINE
+4      1     simple_stmt       RW_NUM       num      apply: declaration_stmt | assignment_stmt | ...
+5      1     simple_stmt       RW_NUM       num      select: declaration_stmt (or input_stmt)
+6      1     declaration_stmt  RW_NUM       num      apply: type IDENTIFIER [ ASSIGN expression ]
+7      1     type              RW_NUM       num      apply: RW_NUM | RW_TUL | RW_BAKA | ...
+8      1     type              RW_NUM       num      match: token consumed
+9      1     declaration_stmt  IDENTIFIER   a        match: token consumed
+10     1     declaration_stmt  ASSIGN       =        match: token consumed
+11     1     declaration_stmt  INT_LITERAL  5        select: expression (declaration with a value)
+12     1     expression        INT_LITERAL  5        apply: logical_expression
+...    (the expression rules down to primary_atom, then "match" for the 5)
+27     1     statement         NEWLINE      \n       match: token consumed
+
+An error appears in the same table, followed by the recovery:
+
+  ... block   NEWLINE  \n   ERROR: expected ':' to start the block, but found the end of the line
+  ... program NEWLINE  \n   PANIC MODE: discard tokens up to the end of the statement
+  ... program NEWLINE  \n   discard (panic mode)
+  ... program INDENT   INDENT   discard (panic mode)
+
+(The columns in the real file are wider than in this example.) The file is
+overwritten on every run. A long program gives a long table - a 55-line program
+with every statement type produces about 1500 rows.
+
+
+==============================================================================
+ 13. TEST FILES AND SAMPLE OUTPUT
+==============================================================================
+
+syntax_test.tagpy - a correct program with every kind of statement:
+declarations (num, tul, baka, kar, pisi, lista), lists, dictionaries, sets,
+noise words (ang, ay), kunin input, assignments, arithmetic / logical /
+relational expressions, sulat and sulatln output, kung / kundikung / kundi,
+bawat, habang, itukoy with parameters and ibalik, function calls, and
+suri / sakali.
+
+    run.bat syntax_test.tagpy          (or: ./front syntax_test.tagpy
+                                        then ./syntax_analyzer -q)
+    ->  Syntax analysis of "Symbol Table.txt": 322 token(s) read, 0 syntax error(s).
+        Parsing table written to "Parsing Table.txt" (1494 rows).
+        The program is syntactically correct.
+
+syntax_error_test.tagpy - 11 deliberate mistakes. Each is reported once, and the
+parser recovers so the last two (correct) lines are still parsed:
+
+    run.bat syntax_error_test.tagpy
+    Syntax error (code line 1, token #4): expected an expression (...), but found the end of the line
+    Syntax error (code line 2, token #7): expected an expression (...), but found ASSIGN '='
+    Syntax error (code line 3, token #14): expected ':' to start the block, but found the end of the line
+    Syntax error (code line 5, token #25): expected ')' to close the output statement, but found INT_LITERAL '2'
+    Syntax error (code line 6, token #29): expected a variable name after the data type, but found INT_LITERAL '5'
+    Syntax error (code line 8, token #39): expected an indented block (the line after ':' must be indented), but found RW_SULAT 'sulat'
+    Syntax error (code line 9, token #45): expected '=' (assignment) or '(' (function call) after the name, but found the end of the line
+    Syntax error (code line 10, token #49): expected an expression (...), but found the end of the line
+    Syntax error (code line 11, token #52): expected 'sa' after the loop variable, but found IDENTIFIER 'nums'
+    Syntax error (code line 13, token #65): expected the end of the line after the statement, but found INT_LITERAL '4'
+    Syntax error (code line 14, token #67): 'kundi' has no matching 'kung' before it
+
+    Syntax analysis of "Symbol Table.txt": 86 token(s) read, 11 syntax error(s).
+    Parsing table written to "Parsing Table.txt" (332 rows).
+    The program has syntax errors.
+
+(Note: "code line" does not count the comment line at the top of the file; see
+section 9.) Run ./syntax_analyzer without -q to see the full Enter/Exit trace.
+
+
+==============================================================================
+ 14. NOTES AND LIMITS
+==============================================================================
+
+ * The parser checks SYNTAX only (the grammar). It does not check meaning, for
+   example that a variable was declared or that a type matches a value.
+ * Lexical errors are found by front.c and written to the Symbol Table as
+   INVALID. The parser reports each INVALID token again as a syntax error where
+   it appears, so run front.c first and fix its errors first.
+ * The grammar has no rule for assigning to an index (nums[0] = 5), for a
+   lone expression as a statement, or for several statements on one line
+   separated by ";". These are reported as syntax errors.
+ * Symbol Table rows are read with the TOKEN TYPE in a 24-character column. If
+   the format in front.c (finish() / the header rows) is changed, change
+   TYPE_COLUMN_WIDTH and tokenTable[] in syntax_analyzer.c to match. If a new
+   token type is added to front.c, add it to tokenTable[] too (this is exactly
+   what was done for KW_HABANG).

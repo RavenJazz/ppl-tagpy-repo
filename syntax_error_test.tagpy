@@ -1,0 +1,18 @@
+# Syntax analyzer test - every mistake below should be reported
+num a =
+a = = 5
+kung a > 1
+    sulat("x")
+sulatln(1 2)
+num 5 = 3
+habang a < 3:
+sulat("no indent")
+x
+ibalik 1 +
+bawat i nums:
+    sulat(i)
+a = 3 4
+kundi:
+    sulat("alone")
+num ok = 1
+sulatln(ok)

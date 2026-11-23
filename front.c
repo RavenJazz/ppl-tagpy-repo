@@ -143,6 +143,8 @@ int lineNo = 1;
 #define DOT 72           /* . */
 #define LINE_COMMENT 73  /* # ...        */
 #define BLOCK_COMMENT 74 /* ## ... ##    */
+/* Added for the Syntax Analyzer (while loop of the Tagpy grammar) */
+#define KW_HABANG 75 /* habang    */
 
 /******************************************************/
 /* tokenName - the TOKEN TYPE column of the Symbol Table */
@@ -150,71 +152,131 @@ const char *tokenName(int t)
 {
     switch (t)
     {
-    case IDENT:         return "IDENTIFIER";
-    case NOISE_WORD:    return "NOISE_WORD";
-    case INT_LIT:       return "INT_LITERAL";
-    case FLOAT_LIT:     return "FLOAT_LITERAL";
-    case STRING_LIT:    return "STRING_LITERAL";
-    case TRUE_LIT:      return "TRUE_LITERAL";
-    case FALSE_LIT:     return "FALSE_LITERAL";
+    case IDENT:
+        return "IDENTIFIER";
+    case NOISE_WORD:
+        return "NOISE_WORD";
+    case INT_LIT:
+        return "INT_LITERAL";
+    case FLOAT_LIT:
+        return "FLOAT_LITERAL";
+    case STRING_LIT:
+        return "STRING_LITERAL";
+    case TRUE_LIT:
+        return "TRUE_LITERAL";
+    case FALSE_LIT:
+        return "FALSE_LITERAL";
     /* arithmetic operators (7) */
-    case ADD_OP:        return "ADD";
-    case SUB_OP:        return "SUBTRACT";
-    case MULT_OP:       return "MULTIPLY";
-    case DIV_OP:        return "DIVIDE";
-    case EXP_OP:        return "EXPONENT";
-    case MOD_OP:        return "MODULO";
-    case FLOOR_DIV_OP:  return "FLOOR_DIVIDE";
-    case ASSIGN_OP:     return "ASSIGN";
+    case ADD_OP:
+        return "ADD";
+    case SUB_OP:
+        return "SUBTRACT";
+    case MULT_OP:
+        return "MULTIPLY";
+    case DIV_OP:
+        return "DIVIDE";
+    case EXP_OP:
+        return "EXPONENT";
+    case MOD_OP:
+        return "MODULO";
+    case FLOOR_DIV_OP:
+        return "FLOOR_DIVIDE";
+    case ASSIGN_OP:
+        return "ASSIGN";
     /* boolean operators (9) */
-    case EQ_OP:         return "EQUAL";
-    case NEQ_OP:        return "NOT_EQUAL";
-    case LT_OP:         return "LESS_THAN";
-    case GT_OP:         return "GREATER_THAN";
-    case LE_OP:         return "LESS_EQUAL";
-    case GE_OP:         return "GREATER_EQUAL";
-    case AT_OP:         return "AND";
-    case O_OP:          return "OR";
-    case HINDI_OP:      return "NOT";
+    case EQ_OP:
+        return "EQUAL";
+    case NEQ_OP:
+        return "NOT_EQUAL";
+    case LT_OP:
+        return "LESS_THAN";
+    case GT_OP:
+        return "GREATER_THAN";
+    case LE_OP:
+        return "LESS_EQUAL";
+    case GE_OP:
+        return "GREATER_EQUAL";
+    case AT_OP:
+        return "AND";
+    case O_OP:
+        return "OR";
+    case HINDI_OP:
+        return "NOT";
     /* keywords */
-    case KW_KUNG:       return "KW_KUNG";
-    case KW_KUNDIKUNG:  return "KW_KUNDIKUNG";
-    case KW_KUNDI:      return "KW_KUNDI";
-    case KW_BAWAT:      return "KW_BAWAT";
-    case KW_SA:         return "KW_SA";
-    case KW_ITUKOY:     return "KW_ITUKOY";
-    case KW_IBALIK:     return "KW_IBALIK";
-    case KW_SURI:       return "KW_SURI";
-    case KW_SAKALI:     return "KW_SAKALI";
+    case KW_KUNG:
+        return "KW_KUNG";
+    case KW_KUNDIKUNG:
+        return "KW_KUNDIKUNG";
+    case KW_KUNDI:
+        return "KW_KUNDI";
+    case KW_BAWAT:
+        return "KW_BAWAT";
+    case KW_SA:
+        return "KW_SA";
+    case KW_ITUKOY:
+        return "KW_ITUKOY";
+    case KW_IBALIK:
+        return "KW_IBALIK";
+    case KW_SURI:
+        return "KW_SURI";
+    case KW_SAKALI:
+        return "KW_SAKALI";
+    case KW_HABANG:
+        return "KW_HABANG";
     /* reserved words */
-    case TYPE_NUM:      return "RW_NUM";
-    case TYPE_TUL:      return "RW_TUL";
-    case TYPE_BAKA:     return "RW_BAKA";
-    case TYPE_KAR:      return "RW_KAR";
-    case TYPE_PISI:     return "RW_PISI";
-    case TYPE_LISTA:    return "RW_LISTA";
-    case IO_SULAT:      return "RW_SULAT";
-    case IO_SULATLN:    return "RW_SULATLN";
-    case IO_KUNIN:      return "RW_KUNIN";
+    case TYPE_NUM:
+        return "RW_NUM";
+    case TYPE_TUL:
+        return "RW_TUL";
+    case TYPE_BAKA:
+        return "RW_BAKA";
+    case TYPE_KAR:
+        return "RW_KAR";
+    case TYPE_PISI:
+        return "RW_PISI";
+    case TYPE_LISTA:
+        return "RW_LISTA";
+    case IO_SULAT:
+        return "RW_SULAT";
+    case IO_SULATLN:
+        return "RW_SULATLN";
+    case IO_KUNIN:
+        return "RW_KUNIN";
     /* delimiters and brackets */
-    case LEFT_PAREN:    return "LPAREN";
-    case RIGHT_PAREN:   return "RPAREN";
-    case LEFT_BRACKET:  return "LBRACKET";
-    case RIGHT_BRACKET: return "RBRACKET";
-    case LEFT_BRACE:    return "LBRACE";
-    case RIGHT_BRACE:   return "RBRACE";
-    case COLON:         return "COLON";
-    case COMMA:         return "COMMA";
-    case SEMICOLON:     return "SEMICOLON";
-    case DOT:           return "DOT";
+    case LEFT_PAREN:
+        return "LPAREN";
+    case RIGHT_PAREN:
+        return "RPAREN";
+    case LEFT_BRACKET:
+        return "LBRACKET";
+    case RIGHT_BRACKET:
+        return "RBRACKET";
+    case LEFT_BRACE:
+        return "LBRACE";
+    case RIGHT_BRACE:
+        return "RBRACE";
+    case COLON:
+        return "COLON";
+    case COMMA:
+        return "COMMA";
+    case SEMICOLON:
+        return "SEMICOLON";
+    case DOT:
+        return "DOT";
     /* comments */
-    case LINE_COMMENT:  return "LINE_COMMENT";
-    case BLOCK_COMMENT: return "BLOCK_COMMENT";
+    case LINE_COMMENT:
+        return "LINE_COMMENT";
+    case BLOCK_COMMENT:
+        return "BLOCK_COMMENT";
     /* layout */
-    case TOKEN_NEWLINE: return "NEWLINE";
-    case TOKEN_INDENT:  return "INDENT";
-    case TOKEN_DEDENT:  return "DEDENT";
-    case TOKEN_ERROR:   return "INVALID";
+    case TOKEN_NEWLINE:
+        return "NEWLINE";
+    case TOKEN_INDENT:
+        return "INDENT";
+    case TOKEN_DEDENT:
+        return "DEDENT";
+    case TOKEN_ERROR:
+        return "INVALID";
     }
     return "UNKNOWN";
 }
@@ -604,7 +666,7 @@ void getChar(void)
 /* lexComment - "# ..." (line) or "## ... ##" (block).  nextChar is '#'. */
 int lexComment(void)
 {
-    addChar(); /* first '#' */
+    addChar();             /* first '#' */
     if (peekChar() == '#') /* block comment */
     {
         int closed = 0;
@@ -933,9 +995,26 @@ int keyword_lookup()
             state = (ch == 'g') ? 4 : 99;
             break;
 
-        /* hindi: 7-11 */
+        /* hindi: 7-11, habang: 7,83-87 */
         case 7:
-            state = (ch == 'i') ? 8 : 99;
+            if (ch == 'i')
+                state = 8;
+            else if (ch == 'a')
+                state = 83;
+            else
+                state = 99;
+            break;
+        case 83:
+            state = (ch == 'b') ? 84 : 99;
+            break;
+        case 84:
+            state = (ch == 'a') ? 85 : 99;
+            break;
+        case 85:
+            state = (ch == 'n') ? 86 : 99;
+            break;
+        case 86:
+            state = (ch == 'g') ? 87 : 99;
             break;
         case 8:
             state = (ch == 'n') ? 9 : 99;
@@ -1223,6 +1302,8 @@ int keyword_lookup()
         return KW_SURI;
     if (state == 82)
         return KW_SAKALI;
+    if (state == 87)
+        return KW_HABANG;
 
     if (state == 2 || state == 4)
         return NOISE_WORD;

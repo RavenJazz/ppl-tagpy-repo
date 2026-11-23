@@ -1,0 +1,62 @@
+# Syntax analyzer test - one example of every statement in the grammar
+num a = 10
+num b
+tul name = "Ana"
+baka ok = totoo
+kar letter = 'x'
+pisi price = 12.5
+lista nums = [1, 2, 3]
+lista empty = []
+lista ages = {"ana": 20, "ben": 21}
+lista unique = {1, 2, 3}
+lista nothing = {}
+num ang bilang ay = 5
+
+# input statements
+num edad = kunin("Edad: ")
+tul pangalan = kunin()
+
+# assignment statements and expressions
+a = a + b * 2 - (b // 3) % 4
+a = -a ** 2 ** 2
+ok = (a > 5) at (b < 10) o hindi ok
+price = nums[0] + sum(a, b)
+
+# output statements
+sulat("Hello")
+sulatln(a + b)
+
+## a block comment
+   that spans two lines ##
+kung edad >= 18:
+    sulatln("matanda")
+kundikung edad >= 13:
+    sulatln("binata")
+kundi:
+    sulatln("bata")
+
+bawat n sa nums:
+    sulatln(n)
+
+habang a < b:
+    a = a + 1
+    kung a == 5:
+        sulat("lima")
+
+itukoy add(num x, num y):
+    ibalik x + y
+
+itukoy greet():
+    sulatln("hi")
+    ibalik
+
+add(1, 2)
+greet()
+
+suri a:
+    sakali 1:
+        sulatln("isa")
+    sakali "dalawa":
+        sulatln("dalawa")
+    sakali totoo:
+        sulatln("tama")

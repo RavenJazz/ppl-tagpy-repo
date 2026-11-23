@@ -1,0 +1,1506 @@
+TAGPY SYNTAX ANALYZER - PARSING TABLE
+Input: Symbol Table.txt
+
+STEP   LINE  NON-TERMINAL               LOOKAHEAD       LEXEME                ACTION
+----   ----  ------------               ---------       ------                ------
+1      1     program                    RW_NUM          num                   apply: { statement }
+2      1     statement                  RW_NUM          num                   apply: simple_stmt NEWLINE | compound_stmt
+3      1     statement                  RW_NUM          num                   select: simple_stmt NEWLINE
+4      1     simple_stmt                RW_NUM          num                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+5      1     simple_stmt                RW_NUM          num                   select: declaration_stmt (or input_stmt)
+6      1     declaration_stmt           RW_NUM          num                   apply: type IDENTIFIER [ ASSIGN expression ]
+7      1     type                       RW_NUM          num                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+8      1     type                       RW_NUM          num                   match: token consumed
+9      1     declaration_stmt           IDENTIFIER      a                     match: token consumed
+10     1     declaration_stmt           ASSIGN          =                     match: token consumed
+11     1     declaration_stmt           INT_LITERAL     10                    select: expression (declaration with a value)
+12     1     expression                 INT_LITERAL     10                    apply: logical_expression
+13     1     logical_expression         INT_LITERAL     10                    apply: boolean_or_expr
+14     1     boolean_or_expr            INT_LITERAL     10                    apply: boolean_and_expr { OR boolean_and_expr }
+15     1     boolean_and_expr           INT_LITERAL     10                    apply: boolean_not_expr { AND boolean_not_expr }
+16     1     boolean_not_expr           INT_LITERAL     10                    apply: NOT boolean_not_expr | relational_expression
+17     1     boolean_not_expr           INT_LITERAL     10                    select: relational_expression
+18     1     relational_expression      INT_LITERAL     10                    apply: arithmetic_expression [ rel_op arithmetic_expression ]
+19     1     arithmetic_expression      INT_LITERAL     10                    apply: term { ( ADD | SUBTRACT ) term }
+20     1     term                       INT_LITERAL     10                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+21     1     factor                     INT_LITERAL     10                    apply: [ ADD | SUBTRACT ] power
+22     1     power                      INT_LITERAL     10                    apply: primary_expression [ EXPONENT power ]
+23     1     primary_expression         INT_LITERAL     10                    apply: primary_atom { LBRACKET expression RBRACKET }
+24     1     primary_atom               INT_LITERAL     10                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+25     1     primary_atom               INT_LITERAL     10                    select: literal (the token itself)
+26     1     primary_atom               INT_LITERAL     10                    match: token consumed
+27     1     statement                  NEWLINE         \n                    match: token consumed
+28     2     statement                  RW_NUM          num                   apply: simple_stmt NEWLINE | compound_stmt
+29     2     statement                  RW_NUM          num                   select: simple_stmt NEWLINE
+30     2     simple_stmt                RW_NUM          num                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+31     2     simple_stmt                RW_NUM          num                   select: declaration_stmt (or input_stmt)
+32     2     declaration_stmt           RW_NUM          num                   apply: type IDENTIFIER [ ASSIGN expression ]
+33     2     type                       RW_NUM          num                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+34     2     type                       RW_NUM          num                   match: token consumed
+35     2     declaration_stmt           IDENTIFIER      b                     match: token consumed
+36     2     statement                  NEWLINE         \n                    match: token consumed
+37     3     statement                  RW_TUL          tul                   apply: simple_stmt NEWLINE | compound_stmt
+38     3     statement                  RW_TUL          tul                   select: simple_stmt NEWLINE
+39     3     simple_stmt                RW_TUL          tul                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+40     3     simple_stmt                RW_TUL          tul                   select: declaration_stmt (or input_stmt)
+41     3     declaration_stmt           RW_TUL          tul                   apply: type IDENTIFIER [ ASSIGN expression ]
+42     3     type                       RW_TUL          tul                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+43     3     type                       RW_TUL          tul                   match: token consumed
+44     3     declaration_stmt           IDENTIFIER      name                  match: token consumed
+45     3     declaration_stmt           ASSIGN          =                     match: token consumed
+46     3     declaration_stmt           STRING_LITERAL  "Ana"                 select: expression (declaration with a value)
+47     3     expression                 STRING_LITERAL  "Ana"                 apply: logical_expression
+48     3     logical_expression         STRING_LITERAL  "Ana"                 apply: boolean_or_expr
+49     3     boolean_or_expr            STRING_LITERAL  "Ana"                 apply: boolean_and_expr { OR boolean_and_expr }
+50     3     boolean_and_expr           STRING_LITERAL  "Ana"                 apply: boolean_not_expr { AND boolean_not_expr }
+51     3     boolean_not_expr           STRING_LITERAL  "Ana"                 apply: NOT boolean_not_expr | relational_expression
+52     3     boolean_not_expr           STRING_LITERAL  "Ana"                 select: relational_expression
+53     3     relational_expression      STRING_LITERAL  "Ana"                 apply: arithmetic_expression [ rel_op arithmetic_expression ]
+54     3     arithmetic_expression      STRING_LITERAL  "Ana"                 apply: term { ( ADD | SUBTRACT ) term }
+55     3     term                       STRING_LITERAL  "Ana"                 apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+56     3     factor                     STRING_LITERAL  "Ana"                 apply: [ ADD | SUBTRACT ] power
+57     3     power                      STRING_LITERAL  "Ana"                 apply: primary_expression [ EXPONENT power ]
+58     3     primary_expression         STRING_LITERAL  "Ana"                 apply: primary_atom { LBRACKET expression RBRACKET }
+59     3     primary_atom               STRING_LITERAL  "Ana"                 apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+60     3     primary_atom               STRING_LITERAL  "Ana"                 select: literal (the token itself)
+61     3     primary_atom               STRING_LITERAL  "Ana"                 match: token consumed
+62     3     statement                  NEWLINE         \n                    match: token consumed
+63     4     statement                  RW_BAKA         baka                  apply: simple_stmt NEWLINE | compound_stmt
+64     4     statement                  RW_BAKA         baka                  select: simple_stmt NEWLINE
+65     4     simple_stmt                RW_BAKA         baka                  apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+66     4     simple_stmt                RW_BAKA         baka                  select: declaration_stmt (or input_stmt)
+67     4     declaration_stmt           RW_BAKA         baka                  apply: type IDENTIFIER [ ASSIGN expression ]
+68     4     type                       RW_BAKA         baka                  apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+69     4     type                       RW_BAKA         baka                  match: token consumed
+70     4     declaration_stmt           IDENTIFIER      ok                    match: token consumed
+71     4     declaration_stmt           ASSIGN          =                     match: token consumed
+72     4     declaration_stmt           TRUE_LITERAL    totoo                 select: expression (declaration with a value)
+73     4     expression                 TRUE_LITERAL    totoo                 apply: logical_expression
+74     4     logical_expression         TRUE_LITERAL    totoo                 apply: boolean_or_expr
+75     4     boolean_or_expr            TRUE_LITERAL    totoo                 apply: boolean_and_expr { OR boolean_and_expr }
+76     4     boolean_and_expr           TRUE_LITERAL    totoo                 apply: boolean_not_expr { AND boolean_not_expr }
+77     4     boolean_not_expr           TRUE_LITERAL    totoo                 apply: NOT boolean_not_expr | relational_expression
+78     4     boolean_not_expr           TRUE_LITERAL    totoo                 select: relational_expression
+79     4     relational_expression      TRUE_LITERAL    totoo                 apply: arithmetic_expression [ rel_op arithmetic_expression ]
+80     4     arithmetic_expression      TRUE_LITERAL    totoo                 apply: term { ( ADD | SUBTRACT ) term }
+81     4     term                       TRUE_LITERAL    totoo                 apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+82     4     factor                     TRUE_LITERAL    totoo                 apply: [ ADD | SUBTRACT ] power
+83     4     power                      TRUE_LITERAL    totoo                 apply: primary_expression [ EXPONENT power ]
+84     4     primary_expression         TRUE_LITERAL    totoo                 apply: primary_atom { LBRACKET expression RBRACKET }
+85     4     primary_atom               TRUE_LITERAL    totoo                 apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+86     4     primary_atom               TRUE_LITERAL    totoo                 select: literal (the token itself)
+87     4     primary_atom               TRUE_LITERAL    totoo                 match: token consumed
+88     4     statement                  NEWLINE         \n                    match: token consumed
+89     5     statement                  RW_KAR          kar                   apply: simple_stmt NEWLINE | compound_stmt
+90     5     statement                  RW_KAR          kar                   select: simple_stmt NEWLINE
+91     5     simple_stmt                RW_KAR          kar                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+92     5     simple_stmt                RW_KAR          kar                   select: declaration_stmt (or input_stmt)
+93     5     declaration_stmt           RW_KAR          kar                   apply: type IDENTIFIER [ ASSIGN expression ]
+94     5     type                       RW_KAR          kar                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+95     5     type                       RW_KAR          kar                   match: token consumed
+96     5     declaration_stmt           IDENTIFIER      letter                match: token consumed
+97     5     declaration_stmt           ASSIGN          =                     match: token consumed
+98     5     declaration_stmt           STRING_LITERAL  'x'                   select: expression (declaration with a value)
+99     5     expression                 STRING_LITERAL  'x'                   apply: logical_expression
+100    5     logical_expression         STRING_LITERAL  'x'                   apply: boolean_or_expr
+101    5     boolean_or_expr            STRING_LITERAL  'x'                   apply: boolean_and_expr { OR boolean_and_expr }
+102    5     boolean_and_expr           STRING_LITERAL  'x'                   apply: boolean_not_expr { AND boolean_not_expr }
+103    5     boolean_not_expr           STRING_LITERAL  'x'                   apply: NOT boolean_not_expr | relational_expression
+104    5     boolean_not_expr           STRING_LITERAL  'x'                   select: relational_expression
+105    5     relational_expression      STRING_LITERAL  'x'                   apply: arithmetic_expression [ rel_op arithmetic_expression ]
+106    5     arithmetic_expression      STRING_LITERAL  'x'                   apply: term { ( ADD | SUBTRACT ) term }
+107    5     term                       STRING_LITERAL  'x'                   apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+108    5     factor                     STRING_LITERAL  'x'                   apply: [ ADD | SUBTRACT ] power
+109    5     power                      STRING_LITERAL  'x'                   apply: primary_expression [ EXPONENT power ]
+110    5     primary_expression         STRING_LITERAL  'x'                   apply: primary_atom { LBRACKET expression RBRACKET }
+111    5     primary_atom               STRING_LITERAL  'x'                   apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+112    5     primary_atom               STRING_LITERAL  'x'                   select: literal (the token itself)
+113    5     primary_atom               STRING_LITERAL  'x'                   match: token consumed
+114    5     statement                  NEWLINE         \n                    match: token consumed
+115    6     statement                  RW_PISI         pisi                  apply: simple_stmt NEWLINE | compound_stmt
+116    6     statement                  RW_PISI         pisi                  select: simple_stmt NEWLINE
+117    6     simple_stmt                RW_PISI         pisi                  apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+118    6     simple_stmt                RW_PISI         pisi                  select: declaration_stmt (or input_stmt)
+119    6     declaration_stmt           RW_PISI         pisi                  apply: type IDENTIFIER [ ASSIGN expression ]
+120    6     type                       RW_PISI         pisi                  apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+121    6     type                       RW_PISI         pisi                  match: token consumed
+122    6     declaration_stmt           IDENTIFIER      price                 match: token consumed
+123    6     declaration_stmt           ASSIGN          =                     match: token consumed
+124    6     declaration_stmt           FLOAT_LITERAL   12.5                  select: expression (declaration with a value)
+125    6     expression                 FLOAT_LITERAL   12.5                  apply: logical_expression
+126    6     logical_expression         FLOAT_LITERAL   12.5                  apply: boolean_or_expr
+127    6     boolean_or_expr            FLOAT_LITERAL   12.5                  apply: boolean_and_expr { OR boolean_and_expr }
+128    6     boolean_and_expr           FLOAT_LITERAL   12.5                  apply: boolean_not_expr { AND boolean_not_expr }
+129    6     boolean_not_expr           FLOAT_LITERAL   12.5                  apply: NOT boolean_not_expr | relational_expression
+130    6     boolean_not_expr           FLOAT_LITERAL   12.5                  select: relational_expression
+131    6     relational_expression      FLOAT_LITERAL   12.5                  apply: arithmetic_expression [ rel_op arithmetic_expression ]
+132    6     arithmetic_expression      FLOAT_LITERAL   12.5                  apply: term { ( ADD | SUBTRACT ) term }
+133    6     term                       FLOAT_LITERAL   12.5                  apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+134    6     factor                     FLOAT_LITERAL   12.5                  apply: [ ADD | SUBTRACT ] power
+135    6     power                      FLOAT_LITERAL   12.5                  apply: primary_expression [ EXPONENT power ]
+136    6     primary_expression         FLOAT_LITERAL   12.5                  apply: primary_atom { LBRACKET expression RBRACKET }
+137    6     primary_atom               FLOAT_LITERAL   12.5                  apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+138    6     primary_atom               FLOAT_LITERAL   12.5                  select: literal (the token itself)
+139    6     primary_atom               FLOAT_LITERAL   12.5                  match: token consumed
+140    6     statement                  NEWLINE         \n                    match: token consumed
+141    7     statement                  RW_LISTA        lista                 apply: simple_stmt NEWLINE | compound_stmt
+142    7     statement                  RW_LISTA        lista                 select: simple_stmt NEWLINE
+143    7     simple_stmt                RW_LISTA        lista                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+144    7     simple_stmt                RW_LISTA        lista                 select: declaration_stmt (or input_stmt)
+145    7     declaration_stmt           RW_LISTA        lista                 apply: type IDENTIFIER [ ASSIGN expression ]
+146    7     type                       RW_LISTA        lista                 apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+147    7     type                       RW_LISTA        lista                 match: token consumed
+148    7     declaration_stmt           IDENTIFIER      nums                  match: token consumed
+149    7     declaration_stmt           ASSIGN          =                     match: token consumed
+150    7     declaration_stmt           LBRACKET        [                     select: expression (declaration with a value)
+151    7     expression                 LBRACKET        [                     apply: logical_expression
+152    7     logical_expression         LBRACKET        [                     apply: boolean_or_expr
+153    7     boolean_or_expr            LBRACKET        [                     apply: boolean_and_expr { OR boolean_and_expr }
+154    7     boolean_and_expr           LBRACKET        [                     apply: boolean_not_expr { AND boolean_not_expr }
+155    7     boolean_not_expr           LBRACKET        [                     apply: NOT boolean_not_expr | relational_expression
+156    7     boolean_not_expr           LBRACKET        [                     select: relational_expression
+157    7     relational_expression      LBRACKET        [                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+158    7     arithmetic_expression      LBRACKET        [                     apply: term { ( ADD | SUBTRACT ) term }
+159    7     term                       LBRACKET        [                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+160    7     factor                     LBRACKET        [                     apply: [ ADD | SUBTRACT ] power
+161    7     power                      LBRACKET        [                     apply: primary_expression [ EXPONENT power ]
+162    7     primary_expression         LBRACKET        [                     apply: primary_atom { LBRACKET expression RBRACKET }
+163    7     primary_atom               LBRACKET        [                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+164    7     primary_atom               LBRACKET        [                     select: collection_literal
+165    7     collection_literal         LBRACKET        [                     apply: list_literal | dict_literal | set_literal
+166    7     collection_literal         LBRACKET        [                     select: list_literal
+167    7     list_literal               LBRACKET        [                     apply: LBRACKET [ expression_list ] RBRACKET
+168    7     list_literal               LBRACKET        [                     match: token consumed
+169    7     expression_list            INT_LITERAL     1                     apply: expression { COMMA expression }
+170    7     expression                 INT_LITERAL     1                     apply: logical_expression
+171    7     logical_expression         INT_LITERAL     1                     apply: boolean_or_expr
+172    7     boolean_or_expr            INT_LITERAL     1                     apply: boolean_and_expr { OR boolean_and_expr }
+173    7     boolean_and_expr           INT_LITERAL     1                     apply: boolean_not_expr { AND boolean_not_expr }
+174    7     boolean_not_expr           INT_LITERAL     1                     apply: NOT boolean_not_expr | relational_expression
+175    7     boolean_not_expr           INT_LITERAL     1                     select: relational_expression
+176    7     relational_expression      INT_LITERAL     1                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+177    7     arithmetic_expression      INT_LITERAL     1                     apply: term { ( ADD | SUBTRACT ) term }
+178    7     term                       INT_LITERAL     1                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+179    7     factor                     INT_LITERAL     1                     apply: [ ADD | SUBTRACT ] power
+180    7     power                      INT_LITERAL     1                     apply: primary_expression [ EXPONENT power ]
+181    7     primary_expression         INT_LITERAL     1                     apply: primary_atom { LBRACKET expression RBRACKET }
+182    7     primary_atom               INT_LITERAL     1                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+183    7     primary_atom               INT_LITERAL     1                     select: literal (the token itself)
+184    7     primary_atom               INT_LITERAL     1                     match: token consumed
+185    7     expression_list            COMMA           ,                     match: token consumed
+186    7     expression                 INT_LITERAL     2                     apply: logical_expression
+187    7     logical_expression         INT_LITERAL     2                     apply: boolean_or_expr
+188    7     boolean_or_expr            INT_LITERAL     2                     apply: boolean_and_expr { OR boolean_and_expr }
+189    7     boolean_and_expr           INT_LITERAL     2                     apply: boolean_not_expr { AND boolean_not_expr }
+190    7     boolean_not_expr           INT_LITERAL     2                     apply: NOT boolean_not_expr | relational_expression
+191    7     boolean_not_expr           INT_LITERAL     2                     select: relational_expression
+192    7     relational_expression      INT_LITERAL     2                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+193    7     arithmetic_expression      INT_LITERAL     2                     apply: term { ( ADD | SUBTRACT ) term }
+194    7     term                       INT_LITERAL     2                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+195    7     factor                     INT_LITERAL     2                     apply: [ ADD | SUBTRACT ] power
+196    7     power                      INT_LITERAL     2                     apply: primary_expression [ EXPONENT power ]
+197    7     primary_expression         INT_LITERAL     2                     apply: primary_atom { LBRACKET expression RBRACKET }
+198    7     primary_atom               INT_LITERAL     2                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+199    7     primary_atom               INT_LITERAL     2                     select: literal (the token itself)
+200    7     primary_atom               INT_LITERAL     2                     match: token consumed
+201    7     expression_list            COMMA           ,                     match: token consumed
+202    7     expression                 INT_LITERAL     3                     apply: logical_expression
+203    7     logical_expression         INT_LITERAL     3                     apply: boolean_or_expr
+204    7     boolean_or_expr            INT_LITERAL     3                     apply: boolean_and_expr { OR boolean_and_expr }
+205    7     boolean_and_expr           INT_LITERAL     3                     apply: boolean_not_expr { AND boolean_not_expr }
+206    7     boolean_not_expr           INT_LITERAL     3                     apply: NOT boolean_not_expr | relational_expression
+207    7     boolean_not_expr           INT_LITERAL     3                     select: relational_expression
+208    7     relational_expression      INT_LITERAL     3                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+209    7     arithmetic_expression      INT_LITERAL     3                     apply: term { ( ADD | SUBTRACT ) term }
+210    7     term                       INT_LITERAL     3                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+211    7     factor                     INT_LITERAL     3                     apply: [ ADD | SUBTRACT ] power
+212    7     power                      INT_LITERAL     3                     apply: primary_expression [ EXPONENT power ]
+213    7     primary_expression         INT_LITERAL     3                     apply: primary_atom { LBRACKET expression RBRACKET }
+214    7     primary_atom               INT_LITERAL     3                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+215    7     primary_atom               INT_LITERAL     3                     select: literal (the token itself)
+216    7     primary_atom               INT_LITERAL     3                     match: token consumed
+217    7     list_literal               RBRACKET        ]                     match: token consumed
+218    7     statement                  NEWLINE         \n                    match: token consumed
+219    8     statement                  RW_LISTA        lista                 apply: simple_stmt NEWLINE | compound_stmt
+220    8     statement                  RW_LISTA        lista                 select: simple_stmt NEWLINE
+221    8     simple_stmt                RW_LISTA        lista                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+222    8     simple_stmt                RW_LISTA        lista                 select: declaration_stmt (or input_stmt)
+223    8     declaration_stmt           RW_LISTA        lista                 apply: type IDENTIFIER [ ASSIGN expression ]
+224    8     type                       RW_LISTA        lista                 apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+225    8     type                       RW_LISTA        lista                 match: token consumed
+226    8     declaration_stmt           IDENTIFIER      empty                 match: token consumed
+227    8     declaration_stmt           ASSIGN          =                     match: token consumed
+228    8     declaration_stmt           LBRACKET        [                     select: expression (declaration with a value)
+229    8     expression                 LBRACKET        [                     apply: logical_expression
+230    8     logical_expression         LBRACKET        [                     apply: boolean_or_expr
+231    8     boolean_or_expr            LBRACKET        [                     apply: boolean_and_expr { OR boolean_and_expr }
+232    8     boolean_and_expr           LBRACKET        [                     apply: boolean_not_expr { AND boolean_not_expr }
+233    8     boolean_not_expr           LBRACKET        [                     apply: NOT boolean_not_expr | relational_expression
+234    8     boolean_not_expr           LBRACKET        [                     select: relational_expression
+235    8     relational_expression      LBRACKET        [                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+236    8     arithmetic_expression      LBRACKET        [                     apply: term { ( ADD | SUBTRACT ) term }
+237    8     term                       LBRACKET        [                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+238    8     factor                     LBRACKET        [                     apply: [ ADD | SUBTRACT ] power
+239    8     power                      LBRACKET        [                     apply: primary_expression [ EXPONENT power ]
+240    8     primary_expression         LBRACKET        [                     apply: primary_atom { LBRACKET expression RBRACKET }
+241    8     primary_atom               LBRACKET        [                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+242    8     primary_atom               LBRACKET        [                     select: collection_literal
+243    8     collection_literal         LBRACKET        [                     apply: list_literal | dict_literal | set_literal
+244    8     collection_literal         LBRACKET        [                     select: list_literal
+245    8     list_literal               LBRACKET        [                     apply: LBRACKET [ expression_list ] RBRACKET
+246    8     list_literal               LBRACKET        [                     match: token consumed
+247    8     list_literal               RBRACKET        ]                     match: token consumed
+248    8     statement                  NEWLINE         \n                    match: token consumed
+249    9     statement                  RW_LISTA        lista                 apply: simple_stmt NEWLINE | compound_stmt
+250    9     statement                  RW_LISTA        lista                 select: simple_stmt NEWLINE
+251    9     simple_stmt                RW_LISTA        lista                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+252    9     simple_stmt                RW_LISTA        lista                 select: declaration_stmt (or input_stmt)
+253    9     declaration_stmt           RW_LISTA        lista                 apply: type IDENTIFIER [ ASSIGN expression ]
+254    9     type                       RW_LISTA        lista                 apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+255    9     type                       RW_LISTA        lista                 match: token consumed
+256    9     declaration_stmt           IDENTIFIER      ages                  match: token consumed
+257    9     declaration_stmt           ASSIGN          =                     match: token consumed
+258    9     declaration_stmt           LBRACE          {                     select: expression (declaration with a value)
+259    9     expression                 LBRACE          {                     apply: logical_expression
+260    9     logical_expression         LBRACE          {                     apply: boolean_or_expr
+261    9     boolean_or_expr            LBRACE          {                     apply: boolean_and_expr { OR boolean_and_expr }
+262    9     boolean_and_expr           LBRACE          {                     apply: boolean_not_expr { AND boolean_not_expr }
+263    9     boolean_not_expr           LBRACE          {                     apply: NOT boolean_not_expr | relational_expression
+264    9     boolean_not_expr           LBRACE          {                     select: relational_expression
+265    9     relational_expression      LBRACE          {                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+266    9     arithmetic_expression      LBRACE          {                     apply: term { ( ADD | SUBTRACT ) term }
+267    9     term                       LBRACE          {                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+268    9     factor                     LBRACE          {                     apply: [ ADD | SUBTRACT ] power
+269    9     power                      LBRACE          {                     apply: primary_expression [ EXPONENT power ]
+270    9     primary_expression         LBRACE          {                     apply: primary_atom { LBRACKET expression RBRACKET }
+271    9     primary_atom               LBRACE          {                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+272    9     primary_atom               LBRACE          {                     select: collection_literal
+273    9     collection_literal         LBRACE          {                     apply: list_literal | dict_literal | set_literal
+274    9     collection_literal         LBRACE          {                     select: dict_literal / set_literal
+275    9     dict_literal / set_literal LBRACE          {                     apply: LBRACE [ key_value_pair { COMMA key_value_pair } ] RBRACE | LBRACE expression_list RBRACE
+276    9     dict_literal / set_literal LBRACE          {                     match: token consumed
+277    9     expression                 STRING_LITERAL  "ana"                 apply: logical_expression
+278    9     logical_expression         STRING_LITERAL  "ana"                 apply: boolean_or_expr
+279    9     boolean_or_expr            STRING_LITERAL  "ana"                 apply: boolean_and_expr { OR boolean_and_expr }
+280    9     boolean_and_expr           STRING_LITERAL  "ana"                 apply: boolean_not_expr { AND boolean_not_expr }
+281    9     boolean_not_expr           STRING_LITERAL  "ana"                 apply: NOT boolean_not_expr | relational_expression
+282    9     boolean_not_expr           STRING_LITERAL  "ana"                 select: relational_expression
+283    9     relational_expression      STRING_LITERAL  "ana"                 apply: arithmetic_expression [ rel_op arithmetic_expression ]
+284    9     arithmetic_expression      STRING_LITERAL  "ana"                 apply: term { ( ADD | SUBTRACT ) term }
+285    9     term                       STRING_LITERAL  "ana"                 apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+286    9     factor                     STRING_LITERAL  "ana"                 apply: [ ADD | SUBTRACT ] power
+287    9     power                      STRING_LITERAL  "ana"                 apply: primary_expression [ EXPONENT power ]
+288    9     primary_expression         STRING_LITERAL  "ana"                 apply: primary_atom { LBRACKET expression RBRACKET }
+289    9     primary_atom               STRING_LITERAL  "ana"                 apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+290    9     primary_atom               STRING_LITERAL  "ana"                 select: literal (the token itself)
+291    9     primary_atom               STRING_LITERAL  "ana"                 match: token consumed
+292    9     dict_literal / set_literal COLON           :                     select: dict_literal: key COLON value { COMMA key_value_pair }
+293    9     dict_literal / set_literal COLON           :                     match: token consumed
+294    9     expression                 INT_LITERAL     20                    apply: logical_expression
+295    9     logical_expression         INT_LITERAL     20                    apply: boolean_or_expr
+296    9     boolean_or_expr            INT_LITERAL     20                    apply: boolean_and_expr { OR boolean_and_expr }
+297    9     boolean_and_expr           INT_LITERAL     20                    apply: boolean_not_expr { AND boolean_not_expr }
+298    9     boolean_not_expr           INT_LITERAL     20                    apply: NOT boolean_not_expr | relational_expression
+299    9     boolean_not_expr           INT_LITERAL     20                    select: relational_expression
+300    9     relational_expression      INT_LITERAL     20                    apply: arithmetic_expression [ rel_op arithmetic_expression ]
+301    9     arithmetic_expression      INT_LITERAL     20                    apply: term { ( ADD | SUBTRACT ) term }
+302    9     term                       INT_LITERAL     20                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+303    9     factor                     INT_LITERAL     20                    apply: [ ADD | SUBTRACT ] power
+304    9     power                      INT_LITERAL     20                    apply: primary_expression [ EXPONENT power ]
+305    9     primary_expression         INT_LITERAL     20                    apply: primary_atom { LBRACKET expression RBRACKET }
+306    9     primary_atom               INT_LITERAL     20                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+307    9     primary_atom               INT_LITERAL     20                    select: literal (the token itself)
+308    9     primary_atom               INT_LITERAL     20                    match: token consumed
+309    9     dict_literal / set_literal COMMA           ,                     match: token consumed
+310    9     key_value_pair             STRING_LITERAL  "ben"                 apply: expression COLON expression
+311    9     expression                 STRING_LITERAL  "ben"                 apply: logical_expression
+312    9     logical_expression         STRING_LITERAL  "ben"                 apply: boolean_or_expr
+313    9     boolean_or_expr            STRING_LITERAL  "ben"                 apply: boolean_and_expr { OR boolean_and_expr }
+314    9     boolean_and_expr           STRING_LITERAL  "ben"                 apply: boolean_not_expr { AND boolean_not_expr }
+315    9     boolean_not_expr           STRING_LITERAL  "ben"                 apply: NOT boolean_not_expr | relational_expression
+316    9     boolean_not_expr           STRING_LITERAL  "ben"                 select: relational_expression
+317    9     relational_expression      STRING_LITERAL  "ben"                 apply: arithmetic_expression [ rel_op arithmetic_expression ]
+318    9     arithmetic_expression      STRING_LITERAL  "ben"                 apply: term { ( ADD | SUBTRACT ) term }
+319    9     term                       STRING_LITERAL  "ben"                 apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+320    9     factor                     STRING_LITERAL  "ben"                 apply: [ ADD | SUBTRACT ] power
+321    9     power                      STRING_LITERAL  "ben"                 apply: primary_expression [ EXPONENT power ]
+322    9     primary_expression         STRING_LITERAL  "ben"                 apply: primary_atom { LBRACKET expression RBRACKET }
+323    9     primary_atom               STRING_LITERAL  "ben"                 apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+324    9     primary_atom               STRING_LITERAL  "ben"                 select: literal (the token itself)
+325    9     primary_atom               STRING_LITERAL  "ben"                 match: token consumed
+326    9     key_value_pair             COLON           :                     match: token consumed
+327    9     expression                 INT_LITERAL     21                    apply: logical_expression
+328    9     logical_expression         INT_LITERAL     21                    apply: boolean_or_expr
+329    9     boolean_or_expr            INT_LITERAL     21                    apply: boolean_and_expr { OR boolean_and_expr }
+330    9     boolean_and_expr           INT_LITERAL     21                    apply: boolean_not_expr { AND boolean_not_expr }
+331    9     boolean_not_expr           INT_LITERAL     21                    apply: NOT boolean_not_expr | relational_expression
+332    9     boolean_not_expr           INT_LITERAL     21                    select: relational_expression
+333    9     relational_expression      INT_LITERAL     21                    apply: arithmetic_expression [ rel_op arithmetic_expression ]
+334    9     arithmetic_expression      INT_LITERAL     21                    apply: term { ( ADD | SUBTRACT ) term }
+335    9     term                       INT_LITERAL     21                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+336    9     factor                     INT_LITERAL     21                    apply: [ ADD | SUBTRACT ] power
+337    9     power                      INT_LITERAL     21                    apply: primary_expression [ EXPONENT power ]
+338    9     primary_expression         INT_LITERAL     21                    apply: primary_atom { LBRACKET expression RBRACKET }
+339    9     primary_atom               INT_LITERAL     21                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+340    9     primary_atom               INT_LITERAL     21                    select: literal (the token itself)
+341    9     primary_atom               INT_LITERAL     21                    match: token consumed
+342    9     dict_literal / set_literal RBRACE          }                     match: token consumed
+343    9     statement                  NEWLINE         \n                    match: token consumed
+344    10    statement                  RW_LISTA        lista                 apply: simple_stmt NEWLINE | compound_stmt
+345    10    statement                  RW_LISTA        lista                 select: simple_stmt NEWLINE
+346    10    simple_stmt                RW_LISTA        lista                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+347    10    simple_stmt                RW_LISTA        lista                 select: declaration_stmt (or input_stmt)
+348    10    declaration_stmt           RW_LISTA        lista                 apply: type IDENTIFIER [ ASSIGN expression ]
+349    10    type                       RW_LISTA        lista                 apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+350    10    type                       RW_LISTA        lista                 match: token consumed
+351    10    declaration_stmt           IDENTIFIER      unique                match: token consumed
+352    10    declaration_stmt           ASSIGN          =                     match: token consumed
+353    10    declaration_stmt           LBRACE          {                     select: expression (declaration with a value)
+354    10    expression                 LBRACE          {                     apply: logical_expression
+355    10    logical_expression         LBRACE          {                     apply: boolean_or_expr
+356    10    boolean_or_expr            LBRACE          {                     apply: boolean_and_expr { OR boolean_and_expr }
+357    10    boolean_and_expr           LBRACE          {                     apply: boolean_not_expr { AND boolean_not_expr }
+358    10    boolean_not_expr           LBRACE          {                     apply: NOT boolean_not_expr | relational_expression
+359    10    boolean_not_expr           LBRACE          {                     select: relational_expression
+360    10    relational_expression      LBRACE          {                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+361    10    arithmetic_expression      LBRACE          {                     apply: term { ( ADD | SUBTRACT ) term }
+362    10    term                       LBRACE          {                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+363    10    factor                     LBRACE          {                     apply: [ ADD | SUBTRACT ] power
+364    10    power                      LBRACE          {                     apply: primary_expression [ EXPONENT power ]
+365    10    primary_expression         LBRACE          {                     apply: primary_atom { LBRACKET expression RBRACKET }
+366    10    primary_atom               LBRACE          {                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+367    10    primary_atom               LBRACE          {                     select: collection_literal
+368    10    collection_literal         LBRACE          {                     apply: list_literal | dict_literal | set_literal
+369    10    collection_literal         LBRACE          {                     select: dict_literal / set_literal
+370    10    dict_literal / set_literal LBRACE          {                     apply: LBRACE [ key_value_pair { COMMA key_value_pair } ] RBRACE | LBRACE expression_list RBRACE
+371    10    dict_literal / set_literal LBRACE          {                     match: token consumed
+372    10    expression                 INT_LITERAL     1                     apply: logical_expression
+373    10    logical_expression         INT_LITERAL     1                     apply: boolean_or_expr
+374    10    boolean_or_expr            INT_LITERAL     1                     apply: boolean_and_expr { OR boolean_and_expr }
+375    10    boolean_and_expr           INT_LITERAL     1                     apply: boolean_not_expr { AND boolean_not_expr }
+376    10    boolean_not_expr           INT_LITERAL     1                     apply: NOT boolean_not_expr | relational_expression
+377    10    boolean_not_expr           INT_LITERAL     1                     select: relational_expression
+378    10    relational_expression      INT_LITERAL     1                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+379    10    arithmetic_expression      INT_LITERAL     1                     apply: term { ( ADD | SUBTRACT ) term }
+380    10    term                       INT_LITERAL     1                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+381    10    factor                     INT_LITERAL     1                     apply: [ ADD | SUBTRACT ] power
+382    10    power                      INT_LITERAL     1                     apply: primary_expression [ EXPONENT power ]
+383    10    primary_expression         INT_LITERAL     1                     apply: primary_atom { LBRACKET expression RBRACKET }
+384    10    primary_atom               INT_LITERAL     1                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+385    10    primary_atom               INT_LITERAL     1                     select: literal (the token itself)
+386    10    primary_atom               INT_LITERAL     1                     match: token consumed
+387    10    dict_literal / set_literal COMMA           ,                     select: set_literal: expression { COMMA expression }
+388    10    dict_literal / set_literal COMMA           ,                     match: token consumed
+389    10    expression                 INT_LITERAL     2                     apply: logical_expression
+390    10    logical_expression         INT_LITERAL     2                     apply: boolean_or_expr
+391    10    boolean_or_expr            INT_LITERAL     2                     apply: boolean_and_expr { OR boolean_and_expr }
+392    10    boolean_and_expr           INT_LITERAL     2                     apply: boolean_not_expr { AND boolean_not_expr }
+393    10    boolean_not_expr           INT_LITERAL     2                     apply: NOT boolean_not_expr | relational_expression
+394    10    boolean_not_expr           INT_LITERAL     2                     select: relational_expression
+395    10    relational_expression      INT_LITERAL     2                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+396    10    arithmetic_expression      INT_LITERAL     2                     apply: term { ( ADD | SUBTRACT ) term }
+397    10    term                       INT_LITERAL     2                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+398    10    factor                     INT_LITERAL     2                     apply: [ ADD | SUBTRACT ] power
+399    10    power                      INT_LITERAL     2                     apply: primary_expression [ EXPONENT power ]
+400    10    primary_expression         INT_LITERAL     2                     apply: primary_atom { LBRACKET expression RBRACKET }
+401    10    primary_atom               INT_LITERAL     2                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+402    10    primary_atom               INT_LITERAL     2                     select: literal (the token itself)
+403    10    primary_atom               INT_LITERAL     2                     match: token consumed
+404    10    dict_literal / set_literal COMMA           ,                     match: token consumed
+405    10    expression                 INT_LITERAL     3                     apply: logical_expression
+406    10    logical_expression         INT_LITERAL     3                     apply: boolean_or_expr
+407    10    boolean_or_expr            INT_LITERAL     3                     apply: boolean_and_expr { OR boolean_and_expr }
+408    10    boolean_and_expr           INT_LITERAL     3                     apply: boolean_not_expr { AND boolean_not_expr }
+409    10    boolean_not_expr           INT_LITERAL     3                     apply: NOT boolean_not_expr | relational_expression
+410    10    boolean_not_expr           INT_LITERAL     3                     select: relational_expression
+411    10    relational_expression      INT_LITERAL     3                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+412    10    arithmetic_expression      INT_LITERAL     3                     apply: term { ( ADD | SUBTRACT ) term }
+413    10    term                       INT_LITERAL     3                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+414    10    factor                     INT_LITERAL     3                     apply: [ ADD | SUBTRACT ] power
+415    10    power                      INT_LITERAL     3                     apply: primary_expression [ EXPONENT power ]
+416    10    primary_expression         INT_LITERAL     3                     apply: primary_atom { LBRACKET expression RBRACKET }
+417    10    primary_atom               INT_LITERAL     3                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+418    10    primary_atom               INT_LITERAL     3                     select: literal (the token itself)
+419    10    primary_atom               INT_LITERAL     3                     match: token consumed
+420    10    dict_literal / set_literal RBRACE          }                     match: token consumed
+421    10    statement                  NEWLINE         \n                    match: token consumed
+422    11    statement                  RW_LISTA        lista                 apply: simple_stmt NEWLINE | compound_stmt
+423    11    statement                  RW_LISTA        lista                 select: simple_stmt NEWLINE
+424    11    simple_stmt                RW_LISTA        lista                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+425    11    simple_stmt                RW_LISTA        lista                 select: declaration_stmt (or input_stmt)
+426    11    declaration_stmt           RW_LISTA        lista                 apply: type IDENTIFIER [ ASSIGN expression ]
+427    11    type                       RW_LISTA        lista                 apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+428    11    type                       RW_LISTA        lista                 match: token consumed
+429    11    declaration_stmt           IDENTIFIER      nothing               match: token consumed
+430    11    declaration_stmt           ASSIGN          =                     match: token consumed
+431    11    declaration_stmt           LBRACE          {                     select: expression (declaration with a value)
+432    11    expression                 LBRACE          {                     apply: logical_expression
+433    11    logical_expression         LBRACE          {                     apply: boolean_or_expr
+434    11    boolean_or_expr            LBRACE          {                     apply: boolean_and_expr { OR boolean_and_expr }
+435    11    boolean_and_expr           LBRACE          {                     apply: boolean_not_expr { AND boolean_not_expr }
+436    11    boolean_not_expr           LBRACE          {                     apply: NOT boolean_not_expr | relational_expression
+437    11    boolean_not_expr           LBRACE          {                     select: relational_expression
+438    11    relational_expression      LBRACE          {                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+439    11    arithmetic_expression      LBRACE          {                     apply: term { ( ADD | SUBTRACT ) term }
+440    11    term                       LBRACE          {                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+441    11    factor                     LBRACE          {                     apply: [ ADD | SUBTRACT ] power
+442    11    power                      LBRACE          {                     apply: primary_expression [ EXPONENT power ]
+443    11    primary_expression         LBRACE          {                     apply: primary_atom { LBRACKET expression RBRACKET }
+444    11    primary_atom               LBRACE          {                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+445    11    primary_atom               LBRACE          {                     select: collection_literal
+446    11    collection_literal         LBRACE          {                     apply: list_literal | dict_literal | set_literal
+447    11    collection_literal         LBRACE          {                     select: dict_literal / set_literal
+448    11    dict_literal / set_literal LBRACE          {                     apply: LBRACE [ key_value_pair { COMMA key_value_pair } ] RBRACE | LBRACE expression_list RBRACE
+449    11    dict_literal / set_literal LBRACE          {                     match: token consumed
+450    11    dict_literal / set_literal RBRACE          }                     select: empty dictionary {}
+451    11    dict_literal / set_literal RBRACE          }                     match: token consumed
+452    11    statement                  NEWLINE         \n                    match: token consumed
+453    12    statement                  RW_NUM          num                   apply: simple_stmt NEWLINE | compound_stmt
+454    12    statement                  RW_NUM          num                   select: simple_stmt NEWLINE
+455    12    simple_stmt                RW_NUM          num                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+456    12    simple_stmt                RW_NUM          num                   select: declaration_stmt (or input_stmt)
+457    12    declaration_stmt           RW_NUM          num                   apply: type IDENTIFIER [ ASSIGN expression ]
+458    12    type                       RW_NUM          num                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+459    12    type                       RW_NUM          num                   match: token consumed
+460    12    declaration_stmt           IDENTIFIER      bilang                match: token consumed
+461    12    declaration_stmt           ASSIGN          =                     match: token consumed
+462    12    declaration_stmt           INT_LITERAL     5                     select: expression (declaration with a value)
+463    12    expression                 INT_LITERAL     5                     apply: logical_expression
+464    12    logical_expression         INT_LITERAL     5                     apply: boolean_or_expr
+465    12    boolean_or_expr            INT_LITERAL     5                     apply: boolean_and_expr { OR boolean_and_expr }
+466    12    boolean_and_expr           INT_LITERAL     5                     apply: boolean_not_expr { AND boolean_not_expr }
+467    12    boolean_not_expr           INT_LITERAL     5                     apply: NOT boolean_not_expr | relational_expression
+468    12    boolean_not_expr           INT_LITERAL     5                     select: relational_expression
+469    12    relational_expression      INT_LITERAL     5                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+470    12    arithmetic_expression      INT_LITERAL     5                     apply: term { ( ADD | SUBTRACT ) term }
+471    12    term                       INT_LITERAL     5                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+472    12    factor                     INT_LITERAL     5                     apply: [ ADD | SUBTRACT ] power
+473    12    power                      INT_LITERAL     5                     apply: primary_expression [ EXPONENT power ]
+474    12    primary_expression         INT_LITERAL     5                     apply: primary_atom { LBRACKET expression RBRACKET }
+475    12    primary_atom               INT_LITERAL     5                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+476    12    primary_atom               INT_LITERAL     5                     select: literal (the token itself)
+477    12    primary_atom               INT_LITERAL     5                     match: token consumed
+478    12    statement                  NEWLINE         \n                    match: token consumed
+479    13    statement                  RW_NUM          num                   apply: simple_stmt NEWLINE | compound_stmt
+480    13    statement                  RW_NUM          num                   select: simple_stmt NEWLINE
+481    13    simple_stmt                RW_NUM          num                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+482    13    simple_stmt                RW_NUM          num                   select: declaration_stmt (or input_stmt)
+483    13    declaration_stmt           RW_NUM          num                   apply: type IDENTIFIER [ ASSIGN expression ]
+484    13    type                       RW_NUM          num                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+485    13    type                       RW_NUM          num                   match: token consumed
+486    13    declaration_stmt           IDENTIFIER      edad                  match: token consumed
+487    13    declaration_stmt           ASSIGN          =                     match: token consumed
+488    13    declaration_stmt           RW_KUNIN        kunin                 select: input_stmt
+489    13    input_stmt                 RW_KUNIN        kunin                 apply: RW_KUNIN LPAREN [ expression ] RPAREN  (rest of: type IDENTIFIER ASSIGN ...)
+490    13    input_stmt                 RW_KUNIN        kunin                 match: token consumed
+491    13    input_stmt                 LPAREN          (                     match: token consumed
+492    13    expression                 STRING_LITERAL  "Edad: "              apply: logical_expression
+493    13    logical_expression         STRING_LITERAL  "Edad: "              apply: boolean_or_expr
+494    13    boolean_or_expr            STRING_LITERAL  "Edad: "              apply: boolean_and_expr { OR boolean_and_expr }
+495    13    boolean_and_expr           STRING_LITERAL  "Edad: "              apply: boolean_not_expr { AND boolean_not_expr }
+496    13    boolean_not_expr           STRING_LITERAL  "Edad: "              apply: NOT boolean_not_expr | relational_expression
+497    13    boolean_not_expr           STRING_LITERAL  "Edad: "              select: relational_expression
+498    13    relational_expression      STRING_LITERAL  "Edad: "              apply: arithmetic_expression [ rel_op arithmetic_expression ]
+499    13    arithmetic_expression      STRING_LITERAL  "Edad: "              apply: term { ( ADD | SUBTRACT ) term }
+500    13    term                       STRING_LITERAL  "Edad: "              apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+501    13    factor                     STRING_LITERAL  "Edad: "              apply: [ ADD | SUBTRACT ] power
+502    13    power                      STRING_LITERAL  "Edad: "              apply: primary_expression [ EXPONENT power ]
+503    13    primary_expression         STRING_LITERAL  "Edad: "              apply: primary_atom { LBRACKET expression RBRACKET }
+504    13    primary_atom               STRING_LITERAL  "Edad: "              apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+505    13    primary_atom               STRING_LITERAL  "Edad: "              select: literal (the token itself)
+506    13    primary_atom               STRING_LITERAL  "Edad: "              match: token consumed
+507    13    input_stmt                 RPAREN          )                     match: token consumed
+508    13    statement                  NEWLINE         \n                    match: token consumed
+509    14    statement                  RW_TUL          tul                   apply: simple_stmt NEWLINE | compound_stmt
+510    14    statement                  RW_TUL          tul                   select: simple_stmt NEWLINE
+511    14    simple_stmt                RW_TUL          tul                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+512    14    simple_stmt                RW_TUL          tul                   select: declaration_stmt (or input_stmt)
+513    14    declaration_stmt           RW_TUL          tul                   apply: type IDENTIFIER [ ASSIGN expression ]
+514    14    type                       RW_TUL          tul                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+515    14    type                       RW_TUL          tul                   match: token consumed
+516    14    declaration_stmt           IDENTIFIER      pangalan              match: token consumed
+517    14    declaration_stmt           ASSIGN          =                     match: token consumed
+518    14    declaration_stmt           RW_KUNIN        kunin                 select: input_stmt
+519    14    input_stmt                 RW_KUNIN        kunin                 apply: RW_KUNIN LPAREN [ expression ] RPAREN  (rest of: type IDENTIFIER ASSIGN ...)
+520    14    input_stmt                 RW_KUNIN        kunin                 match: token consumed
+521    14    input_stmt                 LPAREN          (                     match: token consumed
+522    14    input_stmt                 RPAREN          )                     match: token consumed
+523    14    statement                  NEWLINE         \n                    match: token consumed
+524    15    statement                  IDENTIFIER      a                     apply: simple_stmt NEWLINE | compound_stmt
+525    15    statement                  IDENTIFIER      a                     select: simple_stmt NEWLINE
+526    15    simple_stmt                IDENTIFIER      a                     apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+527    15    simple_stmt                IDENTIFIER      a                     select: identifier_stmt (assignment_stmt or call_stmt)
+528    15    identifier_stmt            IDENTIFIER      a                     apply: IDENTIFIER ( assignment_stmt | call_stmt )
+529    15    identifier_stmt            IDENTIFIER      a                     match: token consumed
+530    15    identifier_stmt            ASSIGN          =                     select: assignment_stmt
+531    15    assignment_stmt            ASSIGN          =                     apply: IDENTIFIER ASSIGN expression
+532    15    assignment_stmt            ASSIGN          =                     match: token consumed
+533    15    expression                 IDENTIFIER      a                     apply: logical_expression
+534    15    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+535    15    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+536    15    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+537    15    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+538    15    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+539    15    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+540    15    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+541    15    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+542    15    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+543    15    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+544    15    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+545    15    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+546    15    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+547    15    primary_atom               IDENTIFIER      a                     match: token consumed
+548    15    arithmetic_expression      ADD             +                     match: token consumed
+549    15    term                       IDENTIFIER      b                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+550    15    factor                     IDENTIFIER      b                     apply: [ ADD | SUBTRACT ] power
+551    15    power                      IDENTIFIER      b                     apply: primary_expression [ EXPONENT power ]
+552    15    primary_expression         IDENTIFIER      b                     apply: primary_atom { LBRACKET expression RBRACKET }
+553    15    primary_atom               IDENTIFIER      b                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+554    15    primary_atom               IDENTIFIER      b                     select: IDENTIFIER (or function_call if '(' follows)
+555    15    primary_atom               IDENTIFIER      b                     match: token consumed
+556    15    term                       MULTIPLY        *                     match: token consumed
+557    15    factor                     INT_LITERAL     2                     apply: [ ADD | SUBTRACT ] power
+558    15    power                      INT_LITERAL     2                     apply: primary_expression [ EXPONENT power ]
+559    15    primary_expression         INT_LITERAL     2                     apply: primary_atom { LBRACKET expression RBRACKET }
+560    15    primary_atom               INT_LITERAL     2                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+561    15    primary_atom               INT_LITERAL     2                     select: literal (the token itself)
+562    15    primary_atom               INT_LITERAL     2                     match: token consumed
+563    15    arithmetic_expression      SUBTRACT        -                     match: token consumed
+564    15    term                       LPAREN          (                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+565    15    factor                     LPAREN          (                     apply: [ ADD | SUBTRACT ] power
+566    15    power                      LPAREN          (                     apply: primary_expression [ EXPONENT power ]
+567    15    primary_expression         LPAREN          (                     apply: primary_atom { LBRACKET expression RBRACKET }
+568    15    primary_atom               LPAREN          (                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+569    15    primary_atom               LPAREN          (                     select: LPAREN expression RPAREN
+570    15    primary_atom               LPAREN          (                     match: token consumed
+571    15    expression                 IDENTIFIER      b                     apply: logical_expression
+572    15    logical_expression         IDENTIFIER      b                     apply: boolean_or_expr
+573    15    boolean_or_expr            IDENTIFIER      b                     apply: boolean_and_expr { OR boolean_and_expr }
+574    15    boolean_and_expr           IDENTIFIER      b                     apply: boolean_not_expr { AND boolean_not_expr }
+575    15    boolean_not_expr           IDENTIFIER      b                     apply: NOT boolean_not_expr | relational_expression
+576    15    boolean_not_expr           IDENTIFIER      b                     select: relational_expression
+577    15    relational_expression      IDENTIFIER      b                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+578    15    arithmetic_expression      IDENTIFIER      b                     apply: term { ( ADD | SUBTRACT ) term }
+579    15    term                       IDENTIFIER      b                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+580    15    factor                     IDENTIFIER      b                     apply: [ ADD | SUBTRACT ] power
+581    15    power                      IDENTIFIER      b                     apply: primary_expression [ EXPONENT power ]
+582    15    primary_expression         IDENTIFIER      b                     apply: primary_atom { LBRACKET expression RBRACKET }
+583    15    primary_atom               IDENTIFIER      b                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+584    15    primary_atom               IDENTIFIER      b                     select: IDENTIFIER (or function_call if '(' follows)
+585    15    primary_atom               IDENTIFIER      b                     match: token consumed
+586    15    term                       FLOOR_DIVIDE    //                    match: token consumed
+587    15    factor                     INT_LITERAL     3                     apply: [ ADD | SUBTRACT ] power
+588    15    power                      INT_LITERAL     3                     apply: primary_expression [ EXPONENT power ]
+589    15    primary_expression         INT_LITERAL     3                     apply: primary_atom { LBRACKET expression RBRACKET }
+590    15    primary_atom               INT_LITERAL     3                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+591    15    primary_atom               INT_LITERAL     3                     select: literal (the token itself)
+592    15    primary_atom               INT_LITERAL     3                     match: token consumed
+593    15    primary_atom               RPAREN          )                     match: token consumed
+594    15    term                       MODULO          %                     match: token consumed
+595    15    factor                     INT_LITERAL     4                     apply: [ ADD | SUBTRACT ] power
+596    15    power                      INT_LITERAL     4                     apply: primary_expression [ EXPONENT power ]
+597    15    primary_expression         INT_LITERAL     4                     apply: primary_atom { LBRACKET expression RBRACKET }
+598    15    primary_atom               INT_LITERAL     4                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+599    15    primary_atom               INT_LITERAL     4                     select: literal (the token itself)
+600    15    primary_atom               INT_LITERAL     4                     match: token consumed
+601    15    statement                  NEWLINE         \n                    match: token consumed
+602    16    statement                  IDENTIFIER      a                     apply: simple_stmt NEWLINE | compound_stmt
+603    16    statement                  IDENTIFIER      a                     select: simple_stmt NEWLINE
+604    16    simple_stmt                IDENTIFIER      a                     apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+605    16    simple_stmt                IDENTIFIER      a                     select: identifier_stmt (assignment_stmt or call_stmt)
+606    16    identifier_stmt            IDENTIFIER      a                     apply: IDENTIFIER ( assignment_stmt | call_stmt )
+607    16    identifier_stmt            IDENTIFIER      a                     match: token consumed
+608    16    identifier_stmt            ASSIGN          =                     select: assignment_stmt
+609    16    assignment_stmt            ASSIGN          =                     apply: IDENTIFIER ASSIGN expression
+610    16    assignment_stmt            ASSIGN          =                     match: token consumed
+611    16    expression                 SUBTRACT        -                     apply: logical_expression
+612    16    logical_expression         SUBTRACT        -                     apply: boolean_or_expr
+613    16    boolean_or_expr            SUBTRACT        -                     apply: boolean_and_expr { OR boolean_and_expr }
+614    16    boolean_and_expr           SUBTRACT        -                     apply: boolean_not_expr { AND boolean_not_expr }
+615    16    boolean_not_expr           SUBTRACT        -                     apply: NOT boolean_not_expr | relational_expression
+616    16    boolean_not_expr           SUBTRACT        -                     select: relational_expression
+617    16    relational_expression      SUBTRACT        -                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+618    16    arithmetic_expression      SUBTRACT        -                     apply: term { ( ADD | SUBTRACT ) term }
+619    16    term                       SUBTRACT        -                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+620    16    factor                     SUBTRACT        -                     apply: [ ADD | SUBTRACT ] power
+621    16    factor                     SUBTRACT        -                     match: token consumed
+622    16    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+623    16    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+624    16    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+625    16    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+626    16    primary_atom               IDENTIFIER      a                     match: token consumed
+627    16    power                      EXPONENT        **                    match: token consumed
+628    16    power                      INT_LITERAL     2                     apply: primary_expression [ EXPONENT power ]
+629    16    primary_expression         INT_LITERAL     2                     apply: primary_atom { LBRACKET expression RBRACKET }
+630    16    primary_atom               INT_LITERAL     2                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+631    16    primary_atom               INT_LITERAL     2                     select: literal (the token itself)
+632    16    primary_atom               INT_LITERAL     2                     match: token consumed
+633    16    power                      EXPONENT        **                    match: token consumed
+634    16    power                      INT_LITERAL     2                     apply: primary_expression [ EXPONENT power ]
+635    16    primary_expression         INT_LITERAL     2                     apply: primary_atom { LBRACKET expression RBRACKET }
+636    16    primary_atom               INT_LITERAL     2                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+637    16    primary_atom               INT_LITERAL     2                     select: literal (the token itself)
+638    16    primary_atom               INT_LITERAL     2                     match: token consumed
+639    16    statement                  NEWLINE         \n                    match: token consumed
+640    17    statement                  IDENTIFIER      ok                    apply: simple_stmt NEWLINE | compound_stmt
+641    17    statement                  IDENTIFIER      ok                    select: simple_stmt NEWLINE
+642    17    simple_stmt                IDENTIFIER      ok                    apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+643    17    simple_stmt                IDENTIFIER      ok                    select: identifier_stmt (assignment_stmt or call_stmt)
+644    17    identifier_stmt            IDENTIFIER      ok                    apply: IDENTIFIER ( assignment_stmt | call_stmt )
+645    17    identifier_stmt            IDENTIFIER      ok                    match: token consumed
+646    17    identifier_stmt            ASSIGN          =                     select: assignment_stmt
+647    17    assignment_stmt            ASSIGN          =                     apply: IDENTIFIER ASSIGN expression
+648    17    assignment_stmt            ASSIGN          =                     match: token consumed
+649    17    expression                 LPAREN          (                     apply: logical_expression
+650    17    logical_expression         LPAREN          (                     apply: boolean_or_expr
+651    17    boolean_or_expr            LPAREN          (                     apply: boolean_and_expr { OR boolean_and_expr }
+652    17    boolean_and_expr           LPAREN          (                     apply: boolean_not_expr { AND boolean_not_expr }
+653    17    boolean_not_expr           LPAREN          (                     apply: NOT boolean_not_expr | relational_expression
+654    17    boolean_not_expr           LPAREN          (                     select: relational_expression
+655    17    relational_expression      LPAREN          (                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+656    17    arithmetic_expression      LPAREN          (                     apply: term { ( ADD | SUBTRACT ) term }
+657    17    term                       LPAREN          (                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+658    17    factor                     LPAREN          (                     apply: [ ADD | SUBTRACT ] power
+659    17    power                      LPAREN          (                     apply: primary_expression [ EXPONENT power ]
+660    17    primary_expression         LPAREN          (                     apply: primary_atom { LBRACKET expression RBRACKET }
+661    17    primary_atom               LPAREN          (                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+662    17    primary_atom               LPAREN          (                     select: LPAREN expression RPAREN
+663    17    primary_atom               LPAREN          (                     match: token consumed
+664    17    expression                 IDENTIFIER      a                     apply: logical_expression
+665    17    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+666    17    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+667    17    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+668    17    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+669    17    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+670    17    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+671    17    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+672    17    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+673    17    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+674    17    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+675    17    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+676    17    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+677    17    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+678    17    primary_atom               IDENTIFIER      a                     match: token consumed
+679    17    relational_expression      GREATER_THAN    >                     match: token consumed
+680    17    arithmetic_expression      INT_LITERAL     5                     apply: term { ( ADD | SUBTRACT ) term }
+681    17    term                       INT_LITERAL     5                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+682    17    factor                     INT_LITERAL     5                     apply: [ ADD | SUBTRACT ] power
+683    17    power                      INT_LITERAL     5                     apply: primary_expression [ EXPONENT power ]
+684    17    primary_expression         INT_LITERAL     5                     apply: primary_atom { LBRACKET expression RBRACKET }
+685    17    primary_atom               INT_LITERAL     5                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+686    17    primary_atom               INT_LITERAL     5                     select: literal (the token itself)
+687    17    primary_atom               INT_LITERAL     5                     match: token consumed
+688    17    primary_atom               RPAREN          )                     match: token consumed
+689    17    boolean_and_expr           AND             at                    match: token consumed
+690    17    boolean_not_expr           LPAREN          (                     apply: NOT boolean_not_expr | relational_expression
+691    17    boolean_not_expr           LPAREN          (                     select: relational_expression
+692    17    relational_expression      LPAREN          (                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+693    17    arithmetic_expression      LPAREN          (                     apply: term { ( ADD | SUBTRACT ) term }
+694    17    term                       LPAREN          (                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+695    17    factor                     LPAREN          (                     apply: [ ADD | SUBTRACT ] power
+696    17    power                      LPAREN          (                     apply: primary_expression [ EXPONENT power ]
+697    17    primary_expression         LPAREN          (                     apply: primary_atom { LBRACKET expression RBRACKET }
+698    17    primary_atom               LPAREN          (                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+699    17    primary_atom               LPAREN          (                     select: LPAREN expression RPAREN
+700    17    primary_atom               LPAREN          (                     match: token consumed
+701    17    expression                 IDENTIFIER      b                     apply: logical_expression
+702    17    logical_expression         IDENTIFIER      b                     apply: boolean_or_expr
+703    17    boolean_or_expr            IDENTIFIER      b                     apply: boolean_and_expr { OR boolean_and_expr }
+704    17    boolean_and_expr           IDENTIFIER      b                     apply: boolean_not_expr { AND boolean_not_expr }
+705    17    boolean_not_expr           IDENTIFIER      b                     apply: NOT boolean_not_expr | relational_expression
+706    17    boolean_not_expr           IDENTIFIER      b                     select: relational_expression
+707    17    relational_expression      IDENTIFIER      b                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+708    17    arithmetic_expression      IDENTIFIER      b                     apply: term { ( ADD | SUBTRACT ) term }
+709    17    term                       IDENTIFIER      b                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+710    17    factor                     IDENTIFIER      b                     apply: [ ADD | SUBTRACT ] power
+711    17    power                      IDENTIFIER      b                     apply: primary_expression [ EXPONENT power ]
+712    17    primary_expression         IDENTIFIER      b                     apply: primary_atom { LBRACKET expression RBRACKET }
+713    17    primary_atom               IDENTIFIER      b                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+714    17    primary_atom               IDENTIFIER      b                     select: IDENTIFIER (or function_call if '(' follows)
+715    17    primary_atom               IDENTIFIER      b                     match: token consumed
+716    17    relational_expression      LESS_THAN       <                     match: token consumed
+717    17    arithmetic_expression      INT_LITERAL     10                    apply: term { ( ADD | SUBTRACT ) term }
+718    17    term                       INT_LITERAL     10                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+719    17    factor                     INT_LITERAL     10                    apply: [ ADD | SUBTRACT ] power
+720    17    power                      INT_LITERAL     10                    apply: primary_expression [ EXPONENT power ]
+721    17    primary_expression         INT_LITERAL     10                    apply: primary_atom { LBRACKET expression RBRACKET }
+722    17    primary_atom               INT_LITERAL     10                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+723    17    primary_atom               INT_LITERAL     10                    select: literal (the token itself)
+724    17    primary_atom               INT_LITERAL     10                    match: token consumed
+725    17    primary_atom               RPAREN          )                     match: token consumed
+726    17    boolean_or_expr            OR              o                     match: token consumed
+727    17    boolean_and_expr           NOT             hindi                 apply: boolean_not_expr { AND boolean_not_expr }
+728    17    boolean_not_expr           NOT             hindi                 apply: NOT boolean_not_expr | relational_expression
+729    17    boolean_not_expr           NOT             hindi                 select: NOT boolean_not_expr
+730    17    boolean_not_expr           NOT             hindi                 match: token consumed
+731    17    boolean_not_expr           IDENTIFIER      ok                    apply: NOT boolean_not_expr | relational_expression
+732    17    boolean_not_expr           IDENTIFIER      ok                    select: relational_expression
+733    17    relational_expression      IDENTIFIER      ok                    apply: arithmetic_expression [ rel_op arithmetic_expression ]
+734    17    arithmetic_expression      IDENTIFIER      ok                    apply: term { ( ADD | SUBTRACT ) term }
+735    17    term                       IDENTIFIER      ok                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+736    17    factor                     IDENTIFIER      ok                    apply: [ ADD | SUBTRACT ] power
+737    17    power                      IDENTIFIER      ok                    apply: primary_expression [ EXPONENT power ]
+738    17    primary_expression         IDENTIFIER      ok                    apply: primary_atom { LBRACKET expression RBRACKET }
+739    17    primary_atom               IDENTIFIER      ok                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+740    17    primary_atom               IDENTIFIER      ok                    select: IDENTIFIER (or function_call if '(' follows)
+741    17    primary_atom               IDENTIFIER      ok                    match: token consumed
+742    17    statement                  NEWLINE         \n                    match: token consumed
+743    18    statement                  IDENTIFIER      price                 apply: simple_stmt NEWLINE | compound_stmt
+744    18    statement                  IDENTIFIER      price                 select: simple_stmt NEWLINE
+745    18    simple_stmt                IDENTIFIER      price                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+746    18    simple_stmt                IDENTIFIER      price                 select: identifier_stmt (assignment_stmt or call_stmt)
+747    18    identifier_stmt            IDENTIFIER      price                 apply: IDENTIFIER ( assignment_stmt | call_stmt )
+748    18    identifier_stmt            IDENTIFIER      price                 match: token consumed
+749    18    identifier_stmt            ASSIGN          =                     select: assignment_stmt
+750    18    assignment_stmt            ASSIGN          =                     apply: IDENTIFIER ASSIGN expression
+751    18    assignment_stmt            ASSIGN          =                     match: token consumed
+752    18    expression                 IDENTIFIER      nums                  apply: logical_expression
+753    18    logical_expression         IDENTIFIER      nums                  apply: boolean_or_expr
+754    18    boolean_or_expr            IDENTIFIER      nums                  apply: boolean_and_expr { OR boolean_and_expr }
+755    18    boolean_and_expr           IDENTIFIER      nums                  apply: boolean_not_expr { AND boolean_not_expr }
+756    18    boolean_not_expr           IDENTIFIER      nums                  apply: NOT boolean_not_expr | relational_expression
+757    18    boolean_not_expr           IDENTIFIER      nums                  select: relational_expression
+758    18    relational_expression      IDENTIFIER      nums                  apply: arithmetic_expression [ rel_op arithmetic_expression ]
+759    18    arithmetic_expression      IDENTIFIER      nums                  apply: term { ( ADD | SUBTRACT ) term }
+760    18    term                       IDENTIFIER      nums                  apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+761    18    factor                     IDENTIFIER      nums                  apply: [ ADD | SUBTRACT ] power
+762    18    power                      IDENTIFIER      nums                  apply: primary_expression [ EXPONENT power ]
+763    18    primary_expression         IDENTIFIER      nums                  apply: primary_atom { LBRACKET expression RBRACKET }
+764    18    primary_atom               IDENTIFIER      nums                  apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+765    18    primary_atom               IDENTIFIER      nums                  select: IDENTIFIER (or function_call if '(' follows)
+766    18    primary_atom               IDENTIFIER      nums                  match: token consumed
+767    18    primary_expression         LBRACKET        [                     match: token consumed
+768    18    expression                 INT_LITERAL     0                     apply: logical_expression
+769    18    logical_expression         INT_LITERAL     0                     apply: boolean_or_expr
+770    18    boolean_or_expr            INT_LITERAL     0                     apply: boolean_and_expr { OR boolean_and_expr }
+771    18    boolean_and_expr           INT_LITERAL     0                     apply: boolean_not_expr { AND boolean_not_expr }
+772    18    boolean_not_expr           INT_LITERAL     0                     apply: NOT boolean_not_expr | relational_expression
+773    18    boolean_not_expr           INT_LITERAL     0                     select: relational_expression
+774    18    relational_expression      INT_LITERAL     0                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+775    18    arithmetic_expression      INT_LITERAL     0                     apply: term { ( ADD | SUBTRACT ) term }
+776    18    term                       INT_LITERAL     0                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+777    18    factor                     INT_LITERAL     0                     apply: [ ADD | SUBTRACT ] power
+778    18    power                      INT_LITERAL     0                     apply: primary_expression [ EXPONENT power ]
+779    18    primary_expression         INT_LITERAL     0                     apply: primary_atom { LBRACKET expression RBRACKET }
+780    18    primary_atom               INT_LITERAL     0                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+781    18    primary_atom               INT_LITERAL     0                     select: literal (the token itself)
+782    18    primary_atom               INT_LITERAL     0                     match: token consumed
+783    18    primary_expression         RBRACKET        ]                     match: token consumed
+784    18    arithmetic_expression      ADD             +                     match: token consumed
+785    18    term                       IDENTIFIER      sum                   apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+786    18    factor                     IDENTIFIER      sum                   apply: [ ADD | SUBTRACT ] power
+787    18    power                      IDENTIFIER      sum                   apply: primary_expression [ EXPONENT power ]
+788    18    primary_expression         IDENTIFIER      sum                   apply: primary_atom { LBRACKET expression RBRACKET }
+789    18    primary_atom               IDENTIFIER      sum                   apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+790    18    primary_atom               IDENTIFIER      sum                   select: IDENTIFIER (or function_call if '(' follows)
+791    18    primary_atom               IDENTIFIER      sum                   match: token consumed
+792    18    function_call              LPAREN          (                     apply: IDENTIFIER LPAREN [ expression_list ] RPAREN
+793    18    function_call              LPAREN          (                     match: token consumed
+794    18    expression_list            IDENTIFIER      a                     apply: expression { COMMA expression }
+795    18    expression                 IDENTIFIER      a                     apply: logical_expression
+796    18    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+797    18    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+798    18    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+799    18    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+800    18    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+801    18    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+802    18    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+803    18    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+804    18    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+805    18    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+806    18    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+807    18    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+808    18    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+809    18    primary_atom               IDENTIFIER      a                     match: token consumed
+810    18    expression_list            COMMA           ,                     match: token consumed
+811    18    expression                 IDENTIFIER      b                     apply: logical_expression
+812    18    logical_expression         IDENTIFIER      b                     apply: boolean_or_expr
+813    18    boolean_or_expr            IDENTIFIER      b                     apply: boolean_and_expr { OR boolean_and_expr }
+814    18    boolean_and_expr           IDENTIFIER      b                     apply: boolean_not_expr { AND boolean_not_expr }
+815    18    boolean_not_expr           IDENTIFIER      b                     apply: NOT boolean_not_expr | relational_expression
+816    18    boolean_not_expr           IDENTIFIER      b                     select: relational_expression
+817    18    relational_expression      IDENTIFIER      b                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+818    18    arithmetic_expression      IDENTIFIER      b                     apply: term { ( ADD | SUBTRACT ) term }
+819    18    term                       IDENTIFIER      b                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+820    18    factor                     IDENTIFIER      b                     apply: [ ADD | SUBTRACT ] power
+821    18    power                      IDENTIFIER      b                     apply: primary_expression [ EXPONENT power ]
+822    18    primary_expression         IDENTIFIER      b                     apply: primary_atom { LBRACKET expression RBRACKET }
+823    18    primary_atom               IDENTIFIER      b                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+824    18    primary_atom               IDENTIFIER      b                     select: IDENTIFIER (or function_call if '(' follows)
+825    18    primary_atom               IDENTIFIER      b                     match: token consumed
+826    18    function_call              RPAREN          )                     match: token consumed
+827    18    statement                  NEWLINE         \n                    match: token consumed
+828    19    statement                  RW_SULAT        sulat                 apply: simple_stmt NEWLINE | compound_stmt
+829    19    statement                  RW_SULAT        sulat                 select: simple_stmt NEWLINE
+830    19    simple_stmt                RW_SULAT        sulat                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+831    19    simple_stmt                RW_SULAT        sulat                 select: output_stmt
+832    19    output_stmt                RW_SULAT        sulat                 apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+833    19    output_stmt                RW_SULAT        sulat                 match: token consumed
+834    19    output_stmt                LPAREN          (                     match: token consumed
+835    19    expression                 STRING_LITERAL  "Hello"               apply: logical_expression
+836    19    logical_expression         STRING_LITERAL  "Hello"               apply: boolean_or_expr
+837    19    boolean_or_expr            STRING_LITERAL  "Hello"               apply: boolean_and_expr { OR boolean_and_expr }
+838    19    boolean_and_expr           STRING_LITERAL  "Hello"               apply: boolean_not_expr { AND boolean_not_expr }
+839    19    boolean_not_expr           STRING_LITERAL  "Hello"               apply: NOT boolean_not_expr | relational_expression
+840    19    boolean_not_expr           STRING_LITERAL  "Hello"               select: relational_expression
+841    19    relational_expression      STRING_LITERAL  "Hello"               apply: arithmetic_expression [ rel_op arithmetic_expression ]
+842    19    arithmetic_expression      STRING_LITERAL  "Hello"               apply: term { ( ADD | SUBTRACT ) term }
+843    19    term                       STRING_LITERAL  "Hello"               apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+844    19    factor                     STRING_LITERAL  "Hello"               apply: [ ADD | SUBTRACT ] power
+845    19    power                      STRING_LITERAL  "Hello"               apply: primary_expression [ EXPONENT power ]
+846    19    primary_expression         STRING_LITERAL  "Hello"               apply: primary_atom { LBRACKET expression RBRACKET }
+847    19    primary_atom               STRING_LITERAL  "Hello"               apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+848    19    primary_atom               STRING_LITERAL  "Hello"               select: literal (the token itself)
+849    19    primary_atom               STRING_LITERAL  "Hello"               match: token consumed
+850    19    output_stmt                RPAREN          )                     match: token consumed
+851    19    statement                  NEWLINE         \n                    match: token consumed
+852    20    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+853    20    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+854    20    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+855    20    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+856    20    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+857    20    output_stmt                RW_SULATLN      sulatln               match: token consumed
+858    20    output_stmt                LPAREN          (                     match: token consumed
+859    20    expression                 IDENTIFIER      a                     apply: logical_expression
+860    20    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+861    20    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+862    20    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+863    20    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+864    20    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+865    20    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+866    20    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+867    20    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+868    20    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+869    20    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+870    20    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+871    20    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+872    20    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+873    20    primary_atom               IDENTIFIER      a                     match: token consumed
+874    20    arithmetic_expression      ADD             +                     match: token consumed
+875    20    term                       IDENTIFIER      b                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+876    20    factor                     IDENTIFIER      b                     apply: [ ADD | SUBTRACT ] power
+877    20    power                      IDENTIFIER      b                     apply: primary_expression [ EXPONENT power ]
+878    20    primary_expression         IDENTIFIER      b                     apply: primary_atom { LBRACKET expression RBRACKET }
+879    20    primary_atom               IDENTIFIER      b                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+880    20    primary_atom               IDENTIFIER      b                     select: IDENTIFIER (or function_call if '(' follows)
+881    20    primary_atom               IDENTIFIER      b                     match: token consumed
+882    20    output_stmt                RPAREN          )                     match: token consumed
+883    20    statement                  NEWLINE         \n                    match: token consumed
+884    21    statement                  KW_KUNG         kung                  apply: simple_stmt NEWLINE | compound_stmt
+885    21    statement                  KW_KUNG         kung                  select: compound_stmt
+886    21    compound_stmt              KW_KUNG         kung                  apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+887    21    compound_stmt              KW_KUNG         kung                  select: conditional_stmt
+888    21    conditional_stmt           KW_KUNG         kung                  apply: if_clause { elif_clause } [ else_clause ]
+889    21    if_clause                  KW_KUNG         kung                  apply: KW_KUNG expression block
+890    21    if_clause                  KW_KUNG         kung                  match: token consumed
+891    21    expression                 IDENTIFIER      edad                  apply: logical_expression
+892    21    logical_expression         IDENTIFIER      edad                  apply: boolean_or_expr
+893    21    boolean_or_expr            IDENTIFIER      edad                  apply: boolean_and_expr { OR boolean_and_expr }
+894    21    boolean_and_expr           IDENTIFIER      edad                  apply: boolean_not_expr { AND boolean_not_expr }
+895    21    boolean_not_expr           IDENTIFIER      edad                  apply: NOT boolean_not_expr | relational_expression
+896    21    boolean_not_expr           IDENTIFIER      edad                  select: relational_expression
+897    21    relational_expression      IDENTIFIER      edad                  apply: arithmetic_expression [ rel_op arithmetic_expression ]
+898    21    arithmetic_expression      IDENTIFIER      edad                  apply: term { ( ADD | SUBTRACT ) term }
+899    21    term                       IDENTIFIER      edad                  apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+900    21    factor                     IDENTIFIER      edad                  apply: [ ADD | SUBTRACT ] power
+901    21    power                      IDENTIFIER      edad                  apply: primary_expression [ EXPONENT power ]
+902    21    primary_expression         IDENTIFIER      edad                  apply: primary_atom { LBRACKET expression RBRACKET }
+903    21    primary_atom               IDENTIFIER      edad                  apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+904    21    primary_atom               IDENTIFIER      edad                  select: IDENTIFIER (or function_call if '(' follows)
+905    21    primary_atom               IDENTIFIER      edad                  match: token consumed
+906    21    relational_expression      GREATER_EQUAL   >=                    match: token consumed
+907    21    arithmetic_expression      INT_LITERAL     18                    apply: term { ( ADD | SUBTRACT ) term }
+908    21    term                       INT_LITERAL     18                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+909    21    factor                     INT_LITERAL     18                    apply: [ ADD | SUBTRACT ] power
+910    21    power                      INT_LITERAL     18                    apply: primary_expression [ EXPONENT power ]
+911    21    primary_expression         INT_LITERAL     18                    apply: primary_atom { LBRACKET expression RBRACKET }
+912    21    primary_atom               INT_LITERAL     18                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+913    21    primary_atom               INT_LITERAL     18                    select: literal (the token itself)
+914    21    primary_atom               INT_LITERAL     18                    match: token consumed
+915    21    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+916    21    block                      COLON           :                     match: token consumed
+917    21    block                      NEWLINE         \n                    match: token consumed
+918    22    block                      INDENT          INDENT                match: token consumed
+919    22    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+920    22    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+921    22    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+922    22    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+923    22    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+924    22    output_stmt                RW_SULATLN      sulatln               match: token consumed
+925    22    output_stmt                LPAREN          (                     match: token consumed
+926    22    expression                 STRING_LITERAL  "matanda"             apply: logical_expression
+927    22    logical_expression         STRING_LITERAL  "matanda"             apply: boolean_or_expr
+928    22    boolean_or_expr            STRING_LITERAL  "matanda"             apply: boolean_and_expr { OR boolean_and_expr }
+929    22    boolean_and_expr           STRING_LITERAL  "matanda"             apply: boolean_not_expr { AND boolean_not_expr }
+930    22    boolean_not_expr           STRING_LITERAL  "matanda"             apply: NOT boolean_not_expr | relational_expression
+931    22    boolean_not_expr           STRING_LITERAL  "matanda"             select: relational_expression
+932    22    relational_expression      STRING_LITERAL  "matanda"             apply: arithmetic_expression [ rel_op arithmetic_expression ]
+933    22    arithmetic_expression      STRING_LITERAL  "matanda"             apply: term { ( ADD | SUBTRACT ) term }
+934    22    term                       STRING_LITERAL  "matanda"             apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+935    22    factor                     STRING_LITERAL  "matanda"             apply: [ ADD | SUBTRACT ] power
+936    22    power                      STRING_LITERAL  "matanda"             apply: primary_expression [ EXPONENT power ]
+937    22    primary_expression         STRING_LITERAL  "matanda"             apply: primary_atom { LBRACKET expression RBRACKET }
+938    22    primary_atom               STRING_LITERAL  "matanda"             apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+939    22    primary_atom               STRING_LITERAL  "matanda"             select: literal (the token itself)
+940    22    primary_atom               STRING_LITERAL  "matanda"             match: token consumed
+941    22    output_stmt                RPAREN          )                     match: token consumed
+942    22    statement                  NEWLINE         \n                    match: token consumed
+943    23    block                      DEDENT          DEDENT                match: token consumed
+944    23    elif_clause                KW_KUNDIKUNG    kundikung             apply: KW_KUNDIKUNG expression block
+945    23    elif_clause                KW_KUNDIKUNG    kundikung             match: token consumed
+946    23    expression                 IDENTIFIER      edad                  apply: logical_expression
+947    23    logical_expression         IDENTIFIER      edad                  apply: boolean_or_expr
+948    23    boolean_or_expr            IDENTIFIER      edad                  apply: boolean_and_expr { OR boolean_and_expr }
+949    23    boolean_and_expr           IDENTIFIER      edad                  apply: boolean_not_expr { AND boolean_not_expr }
+950    23    boolean_not_expr           IDENTIFIER      edad                  apply: NOT boolean_not_expr | relational_expression
+951    23    boolean_not_expr           IDENTIFIER      edad                  select: relational_expression
+952    23    relational_expression      IDENTIFIER      edad                  apply: arithmetic_expression [ rel_op arithmetic_expression ]
+953    23    arithmetic_expression      IDENTIFIER      edad                  apply: term { ( ADD | SUBTRACT ) term }
+954    23    term                       IDENTIFIER      edad                  apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+955    23    factor                     IDENTIFIER      edad                  apply: [ ADD | SUBTRACT ] power
+956    23    power                      IDENTIFIER      edad                  apply: primary_expression [ EXPONENT power ]
+957    23    primary_expression         IDENTIFIER      edad                  apply: primary_atom { LBRACKET expression RBRACKET }
+958    23    primary_atom               IDENTIFIER      edad                  apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+959    23    primary_atom               IDENTIFIER      edad                  select: IDENTIFIER (or function_call if '(' follows)
+960    23    primary_atom               IDENTIFIER      edad                  match: token consumed
+961    23    relational_expression      GREATER_EQUAL   >=                    match: token consumed
+962    23    arithmetic_expression      INT_LITERAL     13                    apply: term { ( ADD | SUBTRACT ) term }
+963    23    term                       INT_LITERAL     13                    apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+964    23    factor                     INT_LITERAL     13                    apply: [ ADD | SUBTRACT ] power
+965    23    power                      INT_LITERAL     13                    apply: primary_expression [ EXPONENT power ]
+966    23    primary_expression         INT_LITERAL     13                    apply: primary_atom { LBRACKET expression RBRACKET }
+967    23    primary_atom               INT_LITERAL     13                    apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+968    23    primary_atom               INT_LITERAL     13                    select: literal (the token itself)
+969    23    primary_atom               INT_LITERAL     13                    match: token consumed
+970    23    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+971    23    block                      COLON           :                     match: token consumed
+972    23    block                      NEWLINE         \n                    match: token consumed
+973    24    block                      INDENT          INDENT                match: token consumed
+974    24    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+975    24    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+976    24    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+977    24    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+978    24    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+979    24    output_stmt                RW_SULATLN      sulatln               match: token consumed
+980    24    output_stmt                LPAREN          (                     match: token consumed
+981    24    expression                 STRING_LITERAL  "binata"              apply: logical_expression
+982    24    logical_expression         STRING_LITERAL  "binata"              apply: boolean_or_expr
+983    24    boolean_or_expr            STRING_LITERAL  "binata"              apply: boolean_and_expr { OR boolean_and_expr }
+984    24    boolean_and_expr           STRING_LITERAL  "binata"              apply: boolean_not_expr { AND boolean_not_expr }
+985    24    boolean_not_expr           STRING_LITERAL  "binata"              apply: NOT boolean_not_expr | relational_expression
+986    24    boolean_not_expr           STRING_LITERAL  "binata"              select: relational_expression
+987    24    relational_expression      STRING_LITERAL  "binata"              apply: arithmetic_expression [ rel_op arithmetic_expression ]
+988    24    arithmetic_expression      STRING_LITERAL  "binata"              apply: term { ( ADD | SUBTRACT ) term }
+989    24    term                       STRING_LITERAL  "binata"              apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+990    24    factor                     STRING_LITERAL  "binata"              apply: [ ADD | SUBTRACT ] power
+991    24    power                      STRING_LITERAL  "binata"              apply: primary_expression [ EXPONENT power ]
+992    24    primary_expression         STRING_LITERAL  "binata"              apply: primary_atom { LBRACKET expression RBRACKET }
+993    24    primary_atom               STRING_LITERAL  "binata"              apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+994    24    primary_atom               STRING_LITERAL  "binata"              select: literal (the token itself)
+995    24    primary_atom               STRING_LITERAL  "binata"              match: token consumed
+996    24    output_stmt                RPAREN          )                     match: token consumed
+997    24    statement                  NEWLINE         \n                    match: token consumed
+998    25    block                      DEDENT          DEDENT                match: token consumed
+999    25    else_clause                KW_KUNDI        kundi                 apply: KW_KUNDI block
+1000   25    else_clause                KW_KUNDI        kundi                 match: token consumed
+1001   25    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1002   25    block                      COLON           :                     match: token consumed
+1003   25    block                      NEWLINE         \n                    match: token consumed
+1004   26    block                      INDENT          INDENT                match: token consumed
+1005   26    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+1006   26    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+1007   26    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1008   26    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+1009   26    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1010   26    output_stmt                RW_SULATLN      sulatln               match: token consumed
+1011   26    output_stmt                LPAREN          (                     match: token consumed
+1012   26    expression                 STRING_LITERAL  "bata"                apply: logical_expression
+1013   26    logical_expression         STRING_LITERAL  "bata"                apply: boolean_or_expr
+1014   26    boolean_or_expr            STRING_LITERAL  "bata"                apply: boolean_and_expr { OR boolean_and_expr }
+1015   26    boolean_and_expr           STRING_LITERAL  "bata"                apply: boolean_not_expr { AND boolean_not_expr }
+1016   26    boolean_not_expr           STRING_LITERAL  "bata"                apply: NOT boolean_not_expr | relational_expression
+1017   26    boolean_not_expr           STRING_LITERAL  "bata"                select: relational_expression
+1018   26    relational_expression      STRING_LITERAL  "bata"                apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1019   26    arithmetic_expression      STRING_LITERAL  "bata"                apply: term { ( ADD | SUBTRACT ) term }
+1020   26    term                       STRING_LITERAL  "bata"                apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1021   26    factor                     STRING_LITERAL  "bata"                apply: [ ADD | SUBTRACT ] power
+1022   26    power                      STRING_LITERAL  "bata"                apply: primary_expression [ EXPONENT power ]
+1023   26    primary_expression         STRING_LITERAL  "bata"                apply: primary_atom { LBRACKET expression RBRACKET }
+1024   26    primary_atom               STRING_LITERAL  "bata"                apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1025   26    primary_atom               STRING_LITERAL  "bata"                select: literal (the token itself)
+1026   26    primary_atom               STRING_LITERAL  "bata"                match: token consumed
+1027   26    output_stmt                RPAREN          )                     match: token consumed
+1028   26    statement                  NEWLINE         \n                    match: token consumed
+1029   27    block                      DEDENT          DEDENT                match: token consumed
+1030   27    statement                  KW_BAWAT        bawat                 apply: simple_stmt NEWLINE | compound_stmt
+1031   27    statement                  KW_BAWAT        bawat                 select: compound_stmt
+1032   27    compound_stmt              KW_BAWAT        bawat                 apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+1033   27    compound_stmt              KW_BAWAT        bawat                 select: iterative_stmt
+1034   27    iterative_stmt             KW_BAWAT        bawat                 apply: for_stmt | while_stmt
+1035   27    iterative_stmt             KW_BAWAT        bawat                 select: for_stmt
+1036   27    for_stmt                   KW_BAWAT        bawat                 apply: KW_BAWAT IDENTIFIER KW_SA expression block
+1037   27    for_stmt                   KW_BAWAT        bawat                 match: token consumed
+1038   27    for_stmt                   IDENTIFIER      n                     match: token consumed
+1039   27    for_stmt                   KW_SA           sa                    match: token consumed
+1040   27    expression                 IDENTIFIER      nums                  apply: logical_expression
+1041   27    logical_expression         IDENTIFIER      nums                  apply: boolean_or_expr
+1042   27    boolean_or_expr            IDENTIFIER      nums                  apply: boolean_and_expr { OR boolean_and_expr }
+1043   27    boolean_and_expr           IDENTIFIER      nums                  apply: boolean_not_expr { AND boolean_not_expr }
+1044   27    boolean_not_expr           IDENTIFIER      nums                  apply: NOT boolean_not_expr | relational_expression
+1045   27    boolean_not_expr           IDENTIFIER      nums                  select: relational_expression
+1046   27    relational_expression      IDENTIFIER      nums                  apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1047   27    arithmetic_expression      IDENTIFIER      nums                  apply: term { ( ADD | SUBTRACT ) term }
+1048   27    term                       IDENTIFIER      nums                  apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1049   27    factor                     IDENTIFIER      nums                  apply: [ ADD | SUBTRACT ] power
+1050   27    power                      IDENTIFIER      nums                  apply: primary_expression [ EXPONENT power ]
+1051   27    primary_expression         IDENTIFIER      nums                  apply: primary_atom { LBRACKET expression RBRACKET }
+1052   27    primary_atom               IDENTIFIER      nums                  apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1053   27    primary_atom               IDENTIFIER      nums                  select: IDENTIFIER (or function_call if '(' follows)
+1054   27    primary_atom               IDENTIFIER      nums                  match: token consumed
+1055   27    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1056   27    block                      COLON           :                     match: token consumed
+1057   27    block                      NEWLINE         \n                    match: token consumed
+1058   28    block                      INDENT          INDENT                match: token consumed
+1059   28    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+1060   28    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+1061   28    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1062   28    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+1063   28    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1064   28    output_stmt                RW_SULATLN      sulatln               match: token consumed
+1065   28    output_stmt                LPAREN          (                     match: token consumed
+1066   28    expression                 IDENTIFIER      n                     apply: logical_expression
+1067   28    logical_expression         IDENTIFIER      n                     apply: boolean_or_expr
+1068   28    boolean_or_expr            IDENTIFIER      n                     apply: boolean_and_expr { OR boolean_and_expr }
+1069   28    boolean_and_expr           IDENTIFIER      n                     apply: boolean_not_expr { AND boolean_not_expr }
+1070   28    boolean_not_expr           IDENTIFIER      n                     apply: NOT boolean_not_expr | relational_expression
+1071   28    boolean_not_expr           IDENTIFIER      n                     select: relational_expression
+1072   28    relational_expression      IDENTIFIER      n                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1073   28    arithmetic_expression      IDENTIFIER      n                     apply: term { ( ADD | SUBTRACT ) term }
+1074   28    term                       IDENTIFIER      n                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1075   28    factor                     IDENTIFIER      n                     apply: [ ADD | SUBTRACT ] power
+1076   28    power                      IDENTIFIER      n                     apply: primary_expression [ EXPONENT power ]
+1077   28    primary_expression         IDENTIFIER      n                     apply: primary_atom { LBRACKET expression RBRACKET }
+1078   28    primary_atom               IDENTIFIER      n                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1079   28    primary_atom               IDENTIFIER      n                     select: IDENTIFIER (or function_call if '(' follows)
+1080   28    primary_atom               IDENTIFIER      n                     match: token consumed
+1081   28    output_stmt                RPAREN          )                     match: token consumed
+1082   28    statement                  NEWLINE         \n                    match: token consumed
+1083   29    block                      DEDENT          DEDENT                match: token consumed
+1084   29    statement                  KW_HABANG       habang                apply: simple_stmt NEWLINE | compound_stmt
+1085   29    statement                  KW_HABANG       habang                select: compound_stmt
+1086   29    compound_stmt              KW_HABANG       habang                apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+1087   29    compound_stmt              KW_HABANG       habang                select: iterative_stmt
+1088   29    iterative_stmt             KW_HABANG       habang                apply: for_stmt | while_stmt
+1089   29    iterative_stmt             KW_HABANG       habang                select: while_stmt
+1090   29    while_stmt                 KW_HABANG       habang                apply: KW_HABANG expression block
+1091   29    while_stmt                 KW_HABANG       habang                match: token consumed
+1092   29    expression                 IDENTIFIER      a                     apply: logical_expression
+1093   29    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+1094   29    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+1095   29    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+1096   29    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+1097   29    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+1098   29    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1099   29    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+1100   29    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1101   29    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+1102   29    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+1103   29    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+1104   29    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1105   29    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+1106   29    primary_atom               IDENTIFIER      a                     match: token consumed
+1107   29    relational_expression      LESS_THAN       <                     match: token consumed
+1108   29    arithmetic_expression      IDENTIFIER      b                     apply: term { ( ADD | SUBTRACT ) term }
+1109   29    term                       IDENTIFIER      b                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1110   29    factor                     IDENTIFIER      b                     apply: [ ADD | SUBTRACT ] power
+1111   29    power                      IDENTIFIER      b                     apply: primary_expression [ EXPONENT power ]
+1112   29    primary_expression         IDENTIFIER      b                     apply: primary_atom { LBRACKET expression RBRACKET }
+1113   29    primary_atom               IDENTIFIER      b                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1114   29    primary_atom               IDENTIFIER      b                     select: IDENTIFIER (or function_call if '(' follows)
+1115   29    primary_atom               IDENTIFIER      b                     match: token consumed
+1116   29    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1117   29    block                      COLON           :                     match: token consumed
+1118   29    block                      NEWLINE         \n                    match: token consumed
+1119   30    block                      INDENT          INDENT                match: token consumed
+1120   30    statement                  IDENTIFIER      a                     apply: simple_stmt NEWLINE | compound_stmt
+1121   30    statement                  IDENTIFIER      a                     select: simple_stmt NEWLINE
+1122   30    simple_stmt                IDENTIFIER      a                     apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1123   30    simple_stmt                IDENTIFIER      a                     select: identifier_stmt (assignment_stmt or call_stmt)
+1124   30    identifier_stmt            IDENTIFIER      a                     apply: IDENTIFIER ( assignment_stmt | call_stmt )
+1125   30    identifier_stmt            IDENTIFIER      a                     match: token consumed
+1126   30    identifier_stmt            ASSIGN          =                     select: assignment_stmt
+1127   30    assignment_stmt            ASSIGN          =                     apply: IDENTIFIER ASSIGN expression
+1128   30    assignment_stmt            ASSIGN          =                     match: token consumed
+1129   30    expression                 IDENTIFIER      a                     apply: logical_expression
+1130   30    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+1131   30    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+1132   30    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+1133   30    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+1134   30    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+1135   30    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1136   30    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+1137   30    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1138   30    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+1139   30    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+1140   30    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+1141   30    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1142   30    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+1143   30    primary_atom               IDENTIFIER      a                     match: token consumed
+1144   30    arithmetic_expression      ADD             +                     match: token consumed
+1145   30    term                       INT_LITERAL     1                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1146   30    factor                     INT_LITERAL     1                     apply: [ ADD | SUBTRACT ] power
+1147   30    power                      INT_LITERAL     1                     apply: primary_expression [ EXPONENT power ]
+1148   30    primary_expression         INT_LITERAL     1                     apply: primary_atom { LBRACKET expression RBRACKET }
+1149   30    primary_atom               INT_LITERAL     1                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1150   30    primary_atom               INT_LITERAL     1                     select: literal (the token itself)
+1151   30    primary_atom               INT_LITERAL     1                     match: token consumed
+1152   30    statement                  NEWLINE         \n                    match: token consumed
+1153   31    statement                  KW_KUNG         kung                  apply: simple_stmt NEWLINE | compound_stmt
+1154   31    statement                  KW_KUNG         kung                  select: compound_stmt
+1155   31    compound_stmt              KW_KUNG         kung                  apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+1156   31    compound_stmt              KW_KUNG         kung                  select: conditional_stmt
+1157   31    conditional_stmt           KW_KUNG         kung                  apply: if_clause { elif_clause } [ else_clause ]
+1158   31    if_clause                  KW_KUNG         kung                  apply: KW_KUNG expression block
+1159   31    if_clause                  KW_KUNG         kung                  match: token consumed
+1160   31    expression                 IDENTIFIER      a                     apply: logical_expression
+1161   31    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+1162   31    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+1163   31    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+1164   31    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+1165   31    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+1166   31    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1167   31    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+1168   31    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1169   31    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+1170   31    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+1171   31    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+1172   31    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1173   31    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+1174   31    primary_atom               IDENTIFIER      a                     match: token consumed
+1175   31    relational_expression      EQUAL           ==                    match: token consumed
+1176   31    arithmetic_expression      INT_LITERAL     5                     apply: term { ( ADD | SUBTRACT ) term }
+1177   31    term                       INT_LITERAL     5                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1178   31    factor                     INT_LITERAL     5                     apply: [ ADD | SUBTRACT ] power
+1179   31    power                      INT_LITERAL     5                     apply: primary_expression [ EXPONENT power ]
+1180   31    primary_expression         INT_LITERAL     5                     apply: primary_atom { LBRACKET expression RBRACKET }
+1181   31    primary_atom               INT_LITERAL     5                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1182   31    primary_atom               INT_LITERAL     5                     select: literal (the token itself)
+1183   31    primary_atom               INT_LITERAL     5                     match: token consumed
+1184   31    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1185   31    block                      COLON           :                     match: token consumed
+1186   31    block                      NEWLINE         \n                    match: token consumed
+1187   32    block                      INDENT          INDENT                match: token consumed
+1188   32    statement                  RW_SULAT        sulat                 apply: simple_stmt NEWLINE | compound_stmt
+1189   32    statement                  RW_SULAT        sulat                 select: simple_stmt NEWLINE
+1190   32    simple_stmt                RW_SULAT        sulat                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1191   32    simple_stmt                RW_SULAT        sulat                 select: output_stmt
+1192   32    output_stmt                RW_SULAT        sulat                 apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1193   32    output_stmt                RW_SULAT        sulat                 match: token consumed
+1194   32    output_stmt                LPAREN          (                     match: token consumed
+1195   32    expression                 STRING_LITERAL  "lima"                apply: logical_expression
+1196   32    logical_expression         STRING_LITERAL  "lima"                apply: boolean_or_expr
+1197   32    boolean_or_expr            STRING_LITERAL  "lima"                apply: boolean_and_expr { OR boolean_and_expr }
+1198   32    boolean_and_expr           STRING_LITERAL  "lima"                apply: boolean_not_expr { AND boolean_not_expr }
+1199   32    boolean_not_expr           STRING_LITERAL  "lima"                apply: NOT boolean_not_expr | relational_expression
+1200   32    boolean_not_expr           STRING_LITERAL  "lima"                select: relational_expression
+1201   32    relational_expression      STRING_LITERAL  "lima"                apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1202   32    arithmetic_expression      STRING_LITERAL  "lima"                apply: term { ( ADD | SUBTRACT ) term }
+1203   32    term                       STRING_LITERAL  "lima"                apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1204   32    factor                     STRING_LITERAL  "lima"                apply: [ ADD | SUBTRACT ] power
+1205   32    power                      STRING_LITERAL  "lima"                apply: primary_expression [ EXPONENT power ]
+1206   32    primary_expression         STRING_LITERAL  "lima"                apply: primary_atom { LBRACKET expression RBRACKET }
+1207   32    primary_atom               STRING_LITERAL  "lima"                apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1208   32    primary_atom               STRING_LITERAL  "lima"                select: literal (the token itself)
+1209   32    primary_atom               STRING_LITERAL  "lima"                match: token consumed
+1210   32    output_stmt                RPAREN          )                     match: token consumed
+1211   32    statement                  NEWLINE         \n                    match: token consumed
+1212   33    block                      DEDENT          DEDENT                match: token consumed
+1213   33    block                      DEDENT          DEDENT                match: token consumed
+1214   33    statement                  KW_ITUKOY       itukoy                apply: simple_stmt NEWLINE | compound_stmt
+1215   33    statement                  KW_ITUKOY       itukoy                select: compound_stmt
+1216   33    compound_stmt              KW_ITUKOY       itukoy                apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+1217   33    compound_stmt              KW_ITUKOY       itukoy                select: function_def
+1218   33    function_def               KW_ITUKOY       itukoy                apply: KW_ITUKOY IDENTIFIER LPAREN [ parameter_list ] RPAREN block
+1219   33    function_def               KW_ITUKOY       itukoy                match: token consumed
+1220   33    function_def               IDENTIFIER      add                   match: token consumed
+1221   33    function_def               LPAREN          (                     match: token consumed
+1222   33    parameter_list             RW_NUM          num                   apply: parameter { COMMA parameter }
+1223   33    parameter                  RW_NUM          num                   apply: [ type ] IDENTIFIER
+1224   33    type                       RW_NUM          num                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+1225   33    type                       RW_NUM          num                   match: token consumed
+1226   33    parameter                  IDENTIFIER      x                     match: token consumed
+1227   33    parameter_list             COMMA           ,                     match: token consumed
+1228   33    parameter                  RW_NUM          num                   apply: [ type ] IDENTIFIER
+1229   33    type                       RW_NUM          num                   apply: RW_NUM | RW_TUL | RW_BAKA | RW_KAR | RW_PISI | RW_LISTA
+1230   33    type                       RW_NUM          num                   match: token consumed
+1231   33    parameter                  IDENTIFIER      y                     match: token consumed
+1232   33    function_def               RPAREN          )                     match: token consumed
+1233   33    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1234   33    block                      COLON           :                     match: token consumed
+1235   33    block                      NEWLINE         \n                    match: token consumed
+1236   34    block                      INDENT          INDENT                match: token consumed
+1237   34    statement                  KW_IBALIK       ibalik                apply: simple_stmt NEWLINE | compound_stmt
+1238   34    statement                  KW_IBALIK       ibalik                select: simple_stmt NEWLINE
+1239   34    simple_stmt                KW_IBALIK       ibalik                apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1240   34    simple_stmt                KW_IBALIK       ibalik                select: return_stmt
+1241   34    return_stmt                KW_IBALIK       ibalik                apply: KW_IBALIK [ expression ]
+1242   34    return_stmt                KW_IBALIK       ibalik                match: token consumed
+1243   34    expression                 IDENTIFIER      x                     apply: logical_expression
+1244   34    logical_expression         IDENTIFIER      x                     apply: boolean_or_expr
+1245   34    boolean_or_expr            IDENTIFIER      x                     apply: boolean_and_expr { OR boolean_and_expr }
+1246   34    boolean_and_expr           IDENTIFIER      x                     apply: boolean_not_expr { AND boolean_not_expr }
+1247   34    boolean_not_expr           IDENTIFIER      x                     apply: NOT boolean_not_expr | relational_expression
+1248   34    boolean_not_expr           IDENTIFIER      x                     select: relational_expression
+1249   34    relational_expression      IDENTIFIER      x                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1250   34    arithmetic_expression      IDENTIFIER      x                     apply: term { ( ADD | SUBTRACT ) term }
+1251   34    term                       IDENTIFIER      x                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1252   34    factor                     IDENTIFIER      x                     apply: [ ADD | SUBTRACT ] power
+1253   34    power                      IDENTIFIER      x                     apply: primary_expression [ EXPONENT power ]
+1254   34    primary_expression         IDENTIFIER      x                     apply: primary_atom { LBRACKET expression RBRACKET }
+1255   34    primary_atom               IDENTIFIER      x                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1256   34    primary_atom               IDENTIFIER      x                     select: IDENTIFIER (or function_call if '(' follows)
+1257   34    primary_atom               IDENTIFIER      x                     match: token consumed
+1258   34    arithmetic_expression      ADD             +                     match: token consumed
+1259   34    term                       IDENTIFIER      y                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1260   34    factor                     IDENTIFIER      y                     apply: [ ADD | SUBTRACT ] power
+1261   34    power                      IDENTIFIER      y                     apply: primary_expression [ EXPONENT power ]
+1262   34    primary_expression         IDENTIFIER      y                     apply: primary_atom { LBRACKET expression RBRACKET }
+1263   34    primary_atom               IDENTIFIER      y                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1264   34    primary_atom               IDENTIFIER      y                     select: IDENTIFIER (or function_call if '(' follows)
+1265   34    primary_atom               IDENTIFIER      y                     match: token consumed
+1266   34    statement                  NEWLINE         \n                    match: token consumed
+1267   35    block                      DEDENT          DEDENT                match: token consumed
+1268   35    statement                  KW_ITUKOY       itukoy                apply: simple_stmt NEWLINE | compound_stmt
+1269   35    statement                  KW_ITUKOY       itukoy                select: compound_stmt
+1270   35    compound_stmt              KW_ITUKOY       itukoy                apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+1271   35    compound_stmt              KW_ITUKOY       itukoy                select: function_def
+1272   35    function_def               KW_ITUKOY       itukoy                apply: KW_ITUKOY IDENTIFIER LPAREN [ parameter_list ] RPAREN block
+1273   35    function_def               KW_ITUKOY       itukoy                match: token consumed
+1274   35    function_def               IDENTIFIER      greet                 match: token consumed
+1275   35    function_def               LPAREN          (                     match: token consumed
+1276   35    function_def               RPAREN          )                     match: token consumed
+1277   35    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1278   35    block                      COLON           :                     match: token consumed
+1279   35    block                      NEWLINE         \n                    match: token consumed
+1280   36    block                      INDENT          INDENT                match: token consumed
+1281   36    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+1282   36    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+1283   36    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1284   36    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+1285   36    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1286   36    output_stmt                RW_SULATLN      sulatln               match: token consumed
+1287   36    output_stmt                LPAREN          (                     match: token consumed
+1288   36    expression                 STRING_LITERAL  "hi"                  apply: logical_expression
+1289   36    logical_expression         STRING_LITERAL  "hi"                  apply: boolean_or_expr
+1290   36    boolean_or_expr            STRING_LITERAL  "hi"                  apply: boolean_and_expr { OR boolean_and_expr }
+1291   36    boolean_and_expr           STRING_LITERAL  "hi"                  apply: boolean_not_expr { AND boolean_not_expr }
+1292   36    boolean_not_expr           STRING_LITERAL  "hi"                  apply: NOT boolean_not_expr | relational_expression
+1293   36    boolean_not_expr           STRING_LITERAL  "hi"                  select: relational_expression
+1294   36    relational_expression      STRING_LITERAL  "hi"                  apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1295   36    arithmetic_expression      STRING_LITERAL  "hi"                  apply: term { ( ADD | SUBTRACT ) term }
+1296   36    term                       STRING_LITERAL  "hi"                  apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1297   36    factor                     STRING_LITERAL  "hi"                  apply: [ ADD | SUBTRACT ] power
+1298   36    power                      STRING_LITERAL  "hi"                  apply: primary_expression [ EXPONENT power ]
+1299   36    primary_expression         STRING_LITERAL  "hi"                  apply: primary_atom { LBRACKET expression RBRACKET }
+1300   36    primary_atom               STRING_LITERAL  "hi"                  apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1301   36    primary_atom               STRING_LITERAL  "hi"                  select: literal (the token itself)
+1302   36    primary_atom               STRING_LITERAL  "hi"                  match: token consumed
+1303   36    output_stmt                RPAREN          )                     match: token consumed
+1304   36    statement                  NEWLINE         \n                    match: token consumed
+1305   37    statement                  KW_IBALIK       ibalik                apply: simple_stmt NEWLINE | compound_stmt
+1306   37    statement                  KW_IBALIK       ibalik                select: simple_stmt NEWLINE
+1307   37    simple_stmt                KW_IBALIK       ibalik                apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1308   37    simple_stmt                KW_IBALIK       ibalik                select: return_stmt
+1309   37    return_stmt                KW_IBALIK       ibalik                apply: KW_IBALIK [ expression ]
+1310   37    return_stmt                KW_IBALIK       ibalik                match: token consumed
+1311   37    statement                  NEWLINE         \n                    match: token consumed
+1312   38    block                      DEDENT          DEDENT                match: token consumed
+1313   38    statement                  IDENTIFIER      add                   apply: simple_stmt NEWLINE | compound_stmt
+1314   38    statement                  IDENTIFIER      add                   select: simple_stmt NEWLINE
+1315   38    simple_stmt                IDENTIFIER      add                   apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1316   38    simple_stmt                IDENTIFIER      add                   select: identifier_stmt (assignment_stmt or call_stmt)
+1317   38    identifier_stmt            IDENTIFIER      add                   apply: IDENTIFIER ( assignment_stmt | call_stmt )
+1318   38    identifier_stmt            IDENTIFIER      add                   match: token consumed
+1319   38    identifier_stmt            LPAREN          (                     select: call_stmt
+1320   38    call_stmt                  LPAREN          (                     apply: function_call
+1321   38    function_call              LPAREN          (                     apply: IDENTIFIER LPAREN [ expression_list ] RPAREN
+1322   38    function_call              LPAREN          (                     match: token consumed
+1323   38    expression_list            INT_LITERAL     1                     apply: expression { COMMA expression }
+1324   38    expression                 INT_LITERAL     1                     apply: logical_expression
+1325   38    logical_expression         INT_LITERAL     1                     apply: boolean_or_expr
+1326   38    boolean_or_expr            INT_LITERAL     1                     apply: boolean_and_expr { OR boolean_and_expr }
+1327   38    boolean_and_expr           INT_LITERAL     1                     apply: boolean_not_expr { AND boolean_not_expr }
+1328   38    boolean_not_expr           INT_LITERAL     1                     apply: NOT boolean_not_expr | relational_expression
+1329   38    boolean_not_expr           INT_LITERAL     1                     select: relational_expression
+1330   38    relational_expression      INT_LITERAL     1                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1331   38    arithmetic_expression      INT_LITERAL     1                     apply: term { ( ADD | SUBTRACT ) term }
+1332   38    term                       INT_LITERAL     1                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1333   38    factor                     INT_LITERAL     1                     apply: [ ADD | SUBTRACT ] power
+1334   38    power                      INT_LITERAL     1                     apply: primary_expression [ EXPONENT power ]
+1335   38    primary_expression         INT_LITERAL     1                     apply: primary_atom { LBRACKET expression RBRACKET }
+1336   38    primary_atom               INT_LITERAL     1                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1337   38    primary_atom               INT_LITERAL     1                     select: literal (the token itself)
+1338   38    primary_atom               INT_LITERAL     1                     match: token consumed
+1339   38    expression_list            COMMA           ,                     match: token consumed
+1340   38    expression                 INT_LITERAL     2                     apply: logical_expression
+1341   38    logical_expression         INT_LITERAL     2                     apply: boolean_or_expr
+1342   38    boolean_or_expr            INT_LITERAL     2                     apply: boolean_and_expr { OR boolean_and_expr }
+1343   38    boolean_and_expr           INT_LITERAL     2                     apply: boolean_not_expr { AND boolean_not_expr }
+1344   38    boolean_not_expr           INT_LITERAL     2                     apply: NOT boolean_not_expr | relational_expression
+1345   38    boolean_not_expr           INT_LITERAL     2                     select: relational_expression
+1346   38    relational_expression      INT_LITERAL     2                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1347   38    arithmetic_expression      INT_LITERAL     2                     apply: term { ( ADD | SUBTRACT ) term }
+1348   38    term                       INT_LITERAL     2                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1349   38    factor                     INT_LITERAL     2                     apply: [ ADD | SUBTRACT ] power
+1350   38    power                      INT_LITERAL     2                     apply: primary_expression [ EXPONENT power ]
+1351   38    primary_expression         INT_LITERAL     2                     apply: primary_atom { LBRACKET expression RBRACKET }
+1352   38    primary_atom               INT_LITERAL     2                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1353   38    primary_atom               INT_LITERAL     2                     select: literal (the token itself)
+1354   38    primary_atom               INT_LITERAL     2                     match: token consumed
+1355   38    function_call              RPAREN          )                     match: token consumed
+1356   38    statement                  NEWLINE         \n                    match: token consumed
+1357   39    statement                  IDENTIFIER      greet                 apply: simple_stmt NEWLINE | compound_stmt
+1358   39    statement                  IDENTIFIER      greet                 select: simple_stmt NEWLINE
+1359   39    simple_stmt                IDENTIFIER      greet                 apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1360   39    simple_stmt                IDENTIFIER      greet                 select: identifier_stmt (assignment_stmt or call_stmt)
+1361   39    identifier_stmt            IDENTIFIER      greet                 apply: IDENTIFIER ( assignment_stmt | call_stmt )
+1362   39    identifier_stmt            IDENTIFIER      greet                 match: token consumed
+1363   39    identifier_stmt            LPAREN          (                     select: call_stmt
+1364   39    call_stmt                  LPAREN          (                     apply: function_call
+1365   39    function_call              LPAREN          (                     apply: IDENTIFIER LPAREN [ expression_list ] RPAREN
+1366   39    function_call              LPAREN          (                     match: token consumed
+1367   39    function_call              RPAREN          )                     match: token consumed
+1368   39    statement                  NEWLINE         \n                    match: token consumed
+1369   40    statement                  KW_SURI         suri                  apply: simple_stmt NEWLINE | compound_stmt
+1370   40    statement                  KW_SURI         suri                  select: compound_stmt
+1371   40    compound_stmt              KW_SURI         suri                  apply: conditional_stmt | iterative_stmt | function_def | match_stmt
+1372   40    compound_stmt              KW_SURI         suri                  select: match_stmt
+1373   40    match_stmt                 KW_SURI         suri                  apply: KW_SURI expression case_block
+1374   40    match_stmt                 KW_SURI         suri                  match: token consumed
+1375   40    expression                 IDENTIFIER      a                     apply: logical_expression
+1376   40    logical_expression         IDENTIFIER      a                     apply: boolean_or_expr
+1377   40    boolean_or_expr            IDENTIFIER      a                     apply: boolean_and_expr { OR boolean_and_expr }
+1378   40    boolean_and_expr           IDENTIFIER      a                     apply: boolean_not_expr { AND boolean_not_expr }
+1379   40    boolean_not_expr           IDENTIFIER      a                     apply: NOT boolean_not_expr | relational_expression
+1380   40    boolean_not_expr           IDENTIFIER      a                     select: relational_expression
+1381   40    relational_expression      IDENTIFIER      a                     apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1382   40    arithmetic_expression      IDENTIFIER      a                     apply: term { ( ADD | SUBTRACT ) term }
+1383   40    term                       IDENTIFIER      a                     apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1384   40    factor                     IDENTIFIER      a                     apply: [ ADD | SUBTRACT ] power
+1385   40    power                      IDENTIFIER      a                     apply: primary_expression [ EXPONENT power ]
+1386   40    primary_expression         IDENTIFIER      a                     apply: primary_atom { LBRACKET expression RBRACKET }
+1387   40    primary_atom               IDENTIFIER      a                     apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1388   40    primary_atom               IDENTIFIER      a                     select: IDENTIFIER (or function_call if '(' follows)
+1389   40    primary_atom               IDENTIFIER      a                     match: token consumed
+1390   40    case_block                 COLON           :                     apply: COLON NEWLINE INDENT case_clause { case_clause } DEDENT
+1391   40    case_block                 COLON           :                     match: token consumed
+1392   40    case_block                 NEWLINE         \n                    match: token consumed
+1393   41    case_block                 INDENT          INDENT                match: token consumed
+1394   41    case_clause                KW_SAKALI       sakali                apply: KW_SAKALI pattern block
+1395   41    case_clause                KW_SAKALI       sakali                match: token consumed
+1396   41    pattern                    INT_LITERAL     1                     apply: INT_LITERAL | FLOAT_LITERAL | STRING_LITERAL | TRUE_LITERAL | FALSE_LITERAL | IDENTIFIER
+1397   41    pattern                    INT_LITERAL     1                     match: token consumed
+1398   41    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1399   41    block                      COLON           :                     match: token consumed
+1400   41    block                      NEWLINE         \n                    match: token consumed
+1401   42    block                      INDENT          INDENT                match: token consumed
+1402   42    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+1403   42    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+1404   42    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1405   42    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+1406   42    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1407   42    output_stmt                RW_SULATLN      sulatln               match: token consumed
+1408   42    output_stmt                LPAREN          (                     match: token consumed
+1409   42    expression                 STRING_LITERAL  "isa"                 apply: logical_expression
+1410   42    logical_expression         STRING_LITERAL  "isa"                 apply: boolean_or_expr
+1411   42    boolean_or_expr            STRING_LITERAL  "isa"                 apply: boolean_and_expr { OR boolean_and_expr }
+1412   42    boolean_and_expr           STRING_LITERAL  "isa"                 apply: boolean_not_expr { AND boolean_not_expr }
+1413   42    boolean_not_expr           STRING_LITERAL  "isa"                 apply: NOT boolean_not_expr | relational_expression
+1414   42    boolean_not_expr           STRING_LITERAL  "isa"                 select: relational_expression
+1415   42    relational_expression      STRING_LITERAL  "isa"                 apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1416   42    arithmetic_expression      STRING_LITERAL  "isa"                 apply: term { ( ADD | SUBTRACT ) term }
+1417   42    term                       STRING_LITERAL  "isa"                 apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1418   42    factor                     STRING_LITERAL  "isa"                 apply: [ ADD | SUBTRACT ] power
+1419   42    power                      STRING_LITERAL  "isa"                 apply: primary_expression [ EXPONENT power ]
+1420   42    primary_expression         STRING_LITERAL  "isa"                 apply: primary_atom { LBRACKET expression RBRACKET }
+1421   42    primary_atom               STRING_LITERAL  "isa"                 apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1422   42    primary_atom               STRING_LITERAL  "isa"                 select: literal (the token itself)
+1423   42    primary_atom               STRING_LITERAL  "isa"                 match: token consumed
+1424   42    output_stmt                RPAREN          )                     match: token consumed
+1425   42    statement                  NEWLINE         \n                    match: token consumed
+1426   43    block                      DEDENT          DEDENT                match: token consumed
+1427   43    case_clause                KW_SAKALI       sakali                apply: KW_SAKALI pattern block
+1428   43    case_clause                KW_SAKALI       sakali                match: token consumed
+1429   43    pattern                    STRING_LITERAL  "dalawa"              apply: INT_LITERAL | FLOAT_LITERAL | STRING_LITERAL | TRUE_LITERAL | FALSE_LITERAL | IDENTIFIER
+1430   43    pattern                    STRING_LITERAL  "dalawa"              match: token consumed
+1431   43    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1432   43    block                      COLON           :                     match: token consumed
+1433   43    block                      NEWLINE         \n                    match: token consumed
+1434   44    block                      INDENT          INDENT                match: token consumed
+1435   44    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+1436   44    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+1437   44    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1438   44    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+1439   44    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1440   44    output_stmt                RW_SULATLN      sulatln               match: token consumed
+1441   44    output_stmt                LPAREN          (                     match: token consumed
+1442   44    expression                 STRING_LITERAL  "dalawa"              apply: logical_expression
+1443   44    logical_expression         STRING_LITERAL  "dalawa"              apply: boolean_or_expr
+1444   44    boolean_or_expr            STRING_LITERAL  "dalawa"              apply: boolean_and_expr { OR boolean_and_expr }
+1445   44    boolean_and_expr           STRING_LITERAL  "dalawa"              apply: boolean_not_expr { AND boolean_not_expr }
+1446   44    boolean_not_expr           STRING_LITERAL  "dalawa"              apply: NOT boolean_not_expr | relational_expression
+1447   44    boolean_not_expr           STRING_LITERAL  "dalawa"              select: relational_expression
+1448   44    relational_expression      STRING_LITERAL  "dalawa"              apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1449   44    arithmetic_expression      STRING_LITERAL  "dalawa"              apply: term { ( ADD | SUBTRACT ) term }
+1450   44    term                       STRING_LITERAL  "dalawa"              apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1451   44    factor                     STRING_LITERAL  "dalawa"              apply: [ ADD | SUBTRACT ] power
+1452   44    power                      STRING_LITERAL  "dalawa"              apply: primary_expression [ EXPONENT power ]
+1453   44    primary_expression         STRING_LITERAL  "dalawa"              apply: primary_atom { LBRACKET expression RBRACKET }
+1454   44    primary_atom               STRING_LITERAL  "dalawa"              apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1455   44    primary_atom               STRING_LITERAL  "dalawa"              select: literal (the token itself)
+1456   44    primary_atom               STRING_LITERAL  "dalawa"              match: token consumed
+1457   44    output_stmt                RPAREN          )                     match: token consumed
+1458   44    statement                  NEWLINE         \n                    match: token consumed
+1459   45    block                      DEDENT          DEDENT                match: token consumed
+1460   45    case_clause                KW_SAKALI       sakali                apply: KW_SAKALI pattern block
+1461   45    case_clause                KW_SAKALI       sakali                match: token consumed
+1462   45    pattern                    TRUE_LITERAL    totoo                 apply: INT_LITERAL | FLOAT_LITERAL | STRING_LITERAL | TRUE_LITERAL | FALSE_LITERAL | IDENTIFIER
+1463   45    pattern                    TRUE_LITERAL    totoo                 match: token consumed
+1464   45    block                      COLON           :                     apply: COLON NEWLINE INDENT statement { statement } DEDENT
+1465   45    block                      COLON           :                     match: token consumed
+1466   45    block                      NEWLINE         \n                    match: token consumed
+1467   46    block                      INDENT          INDENT                match: token consumed
+1468   46    statement                  RW_SULATLN      sulatln               apply: simple_stmt NEWLINE | compound_stmt
+1469   46    statement                  RW_SULATLN      sulatln               select: simple_stmt NEWLINE
+1470   46    simple_stmt                RW_SULATLN      sulatln               apply: declaration_stmt | assignment_stmt | input_stmt | output_stmt | return_stmt | call_stmt
+1471   46    simple_stmt                RW_SULATLN      sulatln               select: output_stmt
+1472   46    output_stmt                RW_SULATLN      sulatln               apply: ( RW_SULAT | RW_SULATLN ) LPAREN expression RPAREN
+1473   46    output_stmt                RW_SULATLN      sulatln               match: token consumed
+1474   46    output_stmt                LPAREN          (                     match: token consumed
+1475   46    expression                 STRING_LITERAL  "tama"                apply: logical_expression
+1476   46    logical_expression         STRING_LITERAL  "tama"                apply: boolean_or_expr
+1477   46    boolean_or_expr            STRING_LITERAL  "tama"                apply: boolean_and_expr { OR boolean_and_expr }
+1478   46    boolean_and_expr           STRING_LITERAL  "tama"                apply: boolean_not_expr { AND boolean_not_expr }
+1479   46    boolean_not_expr           STRING_LITERAL  "tama"                apply: NOT boolean_not_expr | relational_expression
+1480   46    boolean_not_expr           STRING_LITERAL  "tama"                select: relational_expression
+1481   46    relational_expression      STRING_LITERAL  "tama"                apply: arithmetic_expression [ rel_op arithmetic_expression ]
+1482   46    arithmetic_expression      STRING_LITERAL  "tama"                apply: term { ( ADD | SUBTRACT ) term }
+1483   46    term                       STRING_LITERAL  "tama"                apply: factor { ( MULTIPLY | DIVIDE | MODULO | FLOOR_DIVIDE ) factor }
+1484   46    factor                     STRING_LITERAL  "tama"                apply: [ ADD | SUBTRACT ] power
+1485   46    power                      STRING_LITERAL  "tama"                apply: primary_expression [ EXPONENT power ]
+1486   46    primary_expression         STRING_LITERAL  "tama"                apply: primary_atom { LBRACKET expression RBRACKET }
+1487   46    primary_atom               STRING_LITERAL  "tama"                apply: INT_LITERAL | FLOAT_LITERAL | TRUE_LITERAL | FALSE_LITERAL | STRING_LITERAL | collection_literal | function_call | IDENTIFIER | LPAREN expression RPAREN
+1488   46    primary_atom               STRING_LITERAL  "tama"                select: literal (the token itself)
+1489   46    primary_atom               STRING_LITERAL  "tama"                match: token consumed
+1490   46    output_stmt                RPAREN          )                     match: token consumed
+1491   46    statement                  NEWLINE         \n                    match: token consumed
+1492   47    block                      DEDENT          DEDENT                match: token consumed
+1493   47    case_block                 DEDENT          DEDENT                match: token consumed
+1494   47    program                    EOF                                   ACCEPT: end of input, no syntax errors
+
+==== SUMMARY ====
+Input           : Symbol Table.txt
+Tokens read     : 322
+Table rows      : 1494
+Syntax errors   : 0
+Result          : the program is syntactically correct
